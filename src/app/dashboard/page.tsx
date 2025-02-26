@@ -14,10 +14,7 @@ import {
 } from "lucide-react";
 import { withAuth } from "@/components/hoc/withAuth";
 import { Transactions } from "@/components/transactions/Transactions";
-import {
-  Transaction,
-  FeatureCardProps,
-} from "../../../type";
+import { Transaction, FeatureCardProps } from "../../../type";
 import axios from "axios";
 
 // Enhanced animation variants
@@ -94,15 +91,18 @@ const DashboardPage: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [paymentLink, setPaymentLink] = useState<string>("");
   const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
-  const [paymentStatus] = useState<
-    "pending" | "completed" | "failed"
-  >("pending");
+  const [paymentStatus] = useState<"pending" | "completed" | "failed">(
+    "pending"
+  );
   const [formErrors, setFormErrors] = useState({
     amount: false,
     mobileNumber: false,
     email: false,
   });
   const userId = "7880001415";
+
+  const ENDPOINT = "https://lesspay-backend-1.onrender.com"
+  // const ENDPOINT = "http://localhost:5000";
 
   useEffect(() => {
     fetchTransactions();
@@ -111,26 +111,23 @@ const DashboardPage: React.FC = () => {
   const fetchTransactions = async (): Promise<void> => {
     try {
       const userData = localStorage.getItem("userData");
-      console.log("🚀 ~ fetchTransactions ~ userData:", userData)
 
       if (!userData) {
         throw new Error("User data not found in localStorage");
       }
 
       // Parse the data and get the user id from the user object
-      const  user  = JSON.parse(userData);
+      const user = JSON.parse(userData);
       if (!user || !user.id) {
         throw new Error("User ID not found in userData");
       }
-      console.log("🚀 ~ fetchTransactions ~ user:", user)
       setid(user.id);
 
       const response = await fetch(
-        `http://localhost:5000/profile/user-transactions/${user.id}`
+        `${ENDPOINT}/profile/user-transactions/${user.id}`
       );
 
       const data: Transaction[] = await response.json();
-      console.log("🚀 ~ fetchTransactions ~ data:", data)
       setTransactions(data);
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -159,7 +156,7 @@ const DashboardPage: React.FC = () => {
       setError(null);
 
       const response = await axios.post(
-        "http://localhost:5000/api/generate-payment-link",
+        `${ENDPOINT}/api/generate-payment-link`,
         {
           amount,
           mobileno: mobileNumber,
@@ -184,8 +181,6 @@ const DashboardPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  
 
   return (
     <motion.div

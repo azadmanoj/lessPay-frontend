@@ -1,16 +1,28 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, ArrowRight } from "lucide-react"; // Removed Phone icon, added Mail icon
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { ResetPasswordForm } from "../profile/UserProfile";
 
 interface LoginScreenProps {
   onSubmit: (
-    email: string,  // Use email for registration
+    email: string,
     password: string,
     isNewUser: boolean
   ) => Promise<void>;
   loading: boolean;
   error: string;
+  onRequestOTP: (email: string) => Promise<any>; // Function to request OTP for reset password
+  onResetPassword: (
+    email: string,
+    otp: string,
+    newPassword: string
+  ) => Promise<void>; // Function to reset the password
 }
+
+const ENDPOINT = "https://lesspay-backend-1.onrender.com"
+// const ENDPOINT = "http://localhost:5000";
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onSubmit,
@@ -18,13 +30,86 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   error,
 }) => {
   const [isNewUser, setIsNewUser] = useState(false);
-  const [email, setEmail] = useState(""); // Email only for identifier
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isForgotPassword, setIsForgotPassword] = useState(false); // State to toggle between login and reset password
+  const [success, setSuccess] = useState("");
+  
+  const handleRequestOTP = async (email: string) => {
+    setSuccess("");
+
+    try {
+      // Using the actual API endpoint from the backend code
+      const response = await fetch(`${ENDPOINT}/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to send OTP");
+      }
+
+      setSuccess("OTP sent successfully to your email!");
+      return result;
+    } catch (err) {
+      throw err;
+    } finally {
+    }
+  };
+
+  // Handle password reset with OTP
+  const handlePasswordReset = async (
+    email: string,
+    otp: string,
+    newPassword: string
+  ) => {
+    setSuccess("");
+
+    try {
+      // Using the actual API endpoint from the backend code
+      const response = await fetch(`${ENDPOINT}/auth/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to reset password");
+      }
+
+      setSuccess(
+        "Password reset successfully! Please login with your new password."
+      );
+    } catch (err) {
+     
+      throw err;
+    } finally {
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(email, password, isNewUser);
   };
+
+  if (isForgotPassword) {
+    return (
+      <ResetPasswordForm
+        onRequestOTP={handleRequestOTP}
+        onResetPassword={handlePasswordReset}
+        loading={loading}
+      />
+    );
+  }
 
   return (
     <motion.div
@@ -70,7 +155,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
-                type="email"  // Always email input
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-gray-400"
@@ -123,6 +208,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               {isNewUser
                 ? "Already have an account? Sign in"
                 : "Don't have an account? Sign up"}
+            </button>
+
+            {/* Forgot Password Button */}
+          </div>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsForgotPassword(true)} // Toggle to forgot password view
+              className="text-emerald-400  hover:text-emerald-300 text-sm transition-colors"
+            >
+              Forgot Password?
             </button>
           </div>
         </form>

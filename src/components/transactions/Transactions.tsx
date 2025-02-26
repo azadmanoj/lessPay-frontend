@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { Transaction } from "../../../type";
@@ -14,19 +15,17 @@ export const Transactions: React.FC<TransactionsProps> = ({
   // Ensure transactions is always an array
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
 
+  const ENDPOINT = "https://lesspay-backend-1.onrender.com"
+  // const ENDPOINT = "http://localhost:5000";
+
   const [transactionStatuses, setTransactionStatuses] = useState<
     Record<string, string> // store status as "completed", "pending", "failed"
   >({});
 
   // Fetch payment status from API
   const fetchPaymentStatus = async (paymentTransactionId: any) => {
-    console.log(
-      "🚀 ~ fetchPaymentStatus ~ paymentTransactionId:",
-      paymentTransactionId
-    );
-
     try {
-      const response = await fetch("http://localhost:5000/api/payment-status", {
+      const response = await fetch(`${ENDPOINT}/api/payment-status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,7 +64,9 @@ export const Transactions: React.FC<TransactionsProps> = ({
           newStatuses[transaction.paymentTransactionId] = status;
         }
       }
-      setTransactionStatuses(newStatuses);
+      if (newStatuses && Object.keys(newStatuses).length > 0) {
+        setTransactionStatuses(newStatuses);
+      }
     };
 
     fetchStatuses();

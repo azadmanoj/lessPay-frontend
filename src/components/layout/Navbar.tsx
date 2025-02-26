@@ -6,14 +6,47 @@ import { isAuthPage } from "@/utils/routes";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, LogOut, CreditCard, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { UserData } from "../../../type";
+import { api } from "@/services/api";
 
 const Navbar = () => {
-  const { isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
+  const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  const [user, setUser] = useState<UserData>();
+
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          setIsAuthenticated(false);
+          return;
+        }
+
+        const profile = await api.getProfile();
+        setUser(profile);
+
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Authentication failed:", error);
+        handleAuthError();
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   if (isAuthPage(pathname)) return null;
+
+  const handleAuthError = () => {
+    localStorage.removeItem("authToken");
+    setIsAuthenticated(false);
+  };
 
   const navItemVariants = {
     hover: { scale: 1.05, transition: { duration: 0.2 } },
@@ -50,17 +83,18 @@ const Navbar = () => {
               <span>Dashboard</span>
             </Link>
           </motion.div>
-
-          <motion.div whileHover="hover" variants={navItemVariants}>
-            <Link
-              href="/admin"
-              className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>Admin</span>
-            </Link>
-          </motion.div>
+          {user && user?.userRole === "Admin" && (
+            <motion.div whileHover="hover" variants={navItemVariants}>
+              <Link
+                href="/admin"
+                className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>Admin</span>
+              </Link>
+            </motion.div>
+          )}
 
           <motion.div whileHover="hover" variants={navItemVariants}>
             <Link

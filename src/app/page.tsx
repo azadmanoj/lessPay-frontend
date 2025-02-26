@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -8,12 +9,17 @@ import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
+
+const ENDPOINT = "https://lesspay-backend-1.onrender.com"
+// const ENDPOINT = "http://localhost:5000";
+
 const HomePage = () => {
   const { login, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState("login");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleLoginSubmit = async (
     email: string,
@@ -32,6 +38,7 @@ const HomePage = () => {
         if (result.token) {
           await login(result.token);
           router.push("/dashboard");
+          window.location.reload();
         } else {
           throw new Error("Invalid login response");
         }
@@ -41,6 +48,69 @@ const HomePage = () => {
       setError(err.message || "Authentication failed");
     }
   };
+
+
+  const handleRequestOTP = async (email: string) => {
+    setSuccess("");
+
+    try {
+      // Using the actual API endpoint from the backend code
+      const response = await fetch(`${ENDPOINT}/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to send OTP");
+      }
+
+      setSuccess("OTP sent successfully to your email!");
+      return result;
+    } catch (err) {
+      throw err;
+    } finally {
+    }
+  };
+
+  // Handle password reset with OTP
+  const handlePasswordReset = async (
+    email: string,
+    otp: string,
+    newPassword: string
+  ) => {
+    setSuccess("");
+
+    try {
+      // Using the actual API endpoint from the backend code
+      const response = await fetch(`${ENDPOINT}/auth/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to reset password");
+      }
+
+      setSuccess(
+        "Password reset successfully! Please login with your new password."
+      );
+    } catch (err) {
+     
+      throw err;
+    } finally {
+    }
+  };
+
 
   const handleOTPVerify = async (otpValue: string) => {
     setError("");
@@ -56,7 +126,7 @@ const HomePage = () => {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      router.replace("/dashboard");
+      router.replace("/profile");
     }
   }, [isAuthenticated, loading, router]);
 
@@ -79,6 +149,8 @@ const HomePage = () => {
               onSubmit={handleLoginSubmit}
               loading={loading}
               error={error}
+              onRequestOTP={handleRequestOTP} // Ensure this is passed
+              onResetPassword={handlePasswordReset} // Ensure this is passed
             />
           )}
           {step === "otp" && (

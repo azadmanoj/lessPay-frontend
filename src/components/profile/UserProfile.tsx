@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { User, Mail, Lock, Building } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -11,7 +11,6 @@ interface UserProfileProps {
   error: string;
   profile: any;
 }
-
 
 interface ProfileUpdateData {
   fullName?: string;
@@ -44,10 +43,90 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [error, setError] = useState(externalError || "");
   const [success, setSuccess] = useState("");
 
+  const ENDPOINT = "https://lesspay-backend-1.onrender.com"
+  // const ENDPOINT = "http://localhost:5000";
+
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.3 },
+  };
+
+  // Request OTP for password reset
+  const handleRequestOTP = async (email: string) => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // Using the actual API endpoint from the backend code
+      const response = await fetch(`${ENDPOINT}/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to send OTP");
+      }
+
+      setSuccess("OTP sent successfully to your email!");
+      return result;
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while sending OTP"
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle password reset with OTP
+  const handlePasswordReset = async (
+    email: string,
+    otp: string,
+    newPassword: string
+  ) => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // Using the actual API endpoint from the backend code
+      const response = await fetch(`${ENDPOINT}/auth/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to reset password");
+      }
+
+      setSuccess(
+        "Password reset successfully! Please login with your new password."
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while resetting the password"
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Unified function to handle all profile updates
@@ -61,23 +140,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
     try {
       const userData = localStorage.getItem("userData");
+      console.log("🚀 ~ userData:", userData);
 
       if (!userData) {
         throw new Error("User data not found in localStorage");
       }
 
       // Parse the data and get the user info from the user object
-      const { user } = JSON.parse(userData);
-      const phoneNumber = user.phone;
+      const user = JSON.parse(userData);
+      console.log("🚀 ~ user:", user);
+      const email = user.email;
 
       const requestData: ProfileUpdateData = {
-        phoneNumber,
+        email,
         ...data,
       };
 
-
-
-      const response = await fetch("http://localhost:5000/api/update-profile", {
+      const response = await fetch(`${ENDPOINT}/auth/update-profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -154,7 +233,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             onChange={(e) => setActiveTab(e.target.value)}
             className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           >
-            {["personal", "security", "bank"].map((tab) => (
+            {["personal",  "bank", "reset-password"].map((tab) => (
               <option key={tab} value={tab}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </option>
@@ -164,7 +243,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
         {/* Desktop Tabs */}
         <div className="hidden md:flex space-x-4 border-b border-gray-700 mb-6">
-          {["personal", "security", "bank"].map((tab) => (
+          {["personal",  "bank", "reset-password"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -193,22 +272,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               initialData={profile}
             />
           )}
-          {activeTab === "security" && (
-            <SecurityForm
-              onSubmit={(currentPassword, newPassword) =>
-                handleUpdateProfile(
-                  { currentPassword, newPassword },
-                  "password"
-                )
-              }
-              loading={loading || externalLoading}
-            />
-          )}
+         
           {activeTab === "bank" && (
             <BankDetailsForm
               onSubmit={(bankData) =>
                 handleUpdateProfile({ bankDetails: bankData }, "bank account")
               }
+              loading={loading || externalLoading}
+            />
+          )}
+          {activeTab === "reset-password" && (
+            <ResetPasswordForm
+              onRequestOTP={handleRequestOTP}
+              onResetPassword={handlePasswordReset}
               loading={loading || externalLoading}
             />
           )}
@@ -218,7 +294,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   );
 };
 
-// Update Input styles for all forms
+// Styled Input Component
 const StyledInput = ({ leftIcon, label, ...props }: any) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
@@ -242,19 +318,23 @@ const StyledInput = ({ leftIcon, label, ...props }: any) => (
   </motion.div>
 );
 
-// Update button styles
-const FormButton = ({ children, ...props }: any) => (
+// Button Component
+const FormButton = ({ children, variant = "primary", ...props }: any) => (
   <motion.button
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
-    className="w-full flex items-center justify-center py-3 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all"
+    className={`w-full flex items-center justify-center py-3 px-4 rounded-lg ${
+      variant === "primary"
+        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700"
+        : "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700"
+    } font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all`}
     {...props}
   >
     {children}
   </motion.button>
 );
 
-// Update form components to use new styled components
+// Personal Info Form Component
 const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
   const [form, setForm] = useState({
     fullName: initialData?.fullName || "",
@@ -291,76 +371,8 @@ const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
   );
 };
 
-const SecurityForm: React.FC<{
-  onSubmit: (oldPass: string, newPass: string) => void;
-  loading?: boolean;
-}> = ({ onSubmit, loading }) => {
-  const [form, setForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [passwordError, setPasswordError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordError("");
-
-    if (form.newPassword !== form.confirmPassword) {
-      setPasswordError("New passwords don't match");
-      return;
-    }
-
-    if (form.newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters long");
-      return;
-    }
-
-    onSubmit(form.currentPassword, form.newPassword);
-  };
-
-  return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      {passwordError && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
-          {passwordError}
-        </div>
-      )}
-      <StyledInput
-        leftIcon={<Lock size={18} />}
-        type="password"
-        label="Current Password"
-        placeholder="Enter your current password"
-        value={form.currentPassword}
-        onChange={(e: any) =>
-          setForm({ ...form, currentPassword: e.target.value })
-        }
-      />
-      <StyledInput
-        leftIcon={<Lock size={18} />}
-        type="password"
-        label="New Password"
-        placeholder="Enter your new password"
-        value={form.newPassword}
-        onChange={(e: any) => setForm({ ...form, newPassword: e.target.value })}
-      />
-      <StyledInput
-        leftIcon={<Lock size={18} />}
-        type="password"
-        label="Confirm New Password"
-        placeholder="Confirm your new password"
-        value={form.confirmPassword}
-        onChange={(e: any) =>
-          setForm({ ...form, confirmPassword: e.target.value })
-        }
-      />
-      <FormButton type="submit" disabled={loading}>
-        {loading ? "Changing..." : "Change Password"}
-      </FormButton>
-    </form>
-  );
-};
-
+// Bank Details Form Component
 const BankDetailsForm: React.FC<{
   onSubmit: (data: BankAccountData) => void;
   loading?: boolean;
@@ -416,5 +428,204 @@ const BankDetailsForm: React.FC<{
         {loading ? "Adding..." : "Add Bank Account"}
       </FormButton>
     </form>
+  );
+};
+
+// Export ResetPasswordForm component for use in other components
+export const ResetPasswordForm: React.FC<{
+  onRequestOTP: (email: string) => Promise<any>;
+  onResetPassword: (
+    email: string,
+    otp: string,
+    newPassword: string
+  ) => Promise<void>;
+  loading?: boolean;
+}> = ({ onRequestOTP, onResetPassword, loading = false }) => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    email: "",
+    otp: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [localLoading, setLocalLoading] = useState(false);
+
+  useEffect(() => {
+    // Get email from localStorage
+    const userData = localStorage.getItem("userData");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setFormData((prev) => ({ ...prev, email: user.email || "" }));
+    }
+  }, []);
+
+  // Step 1: Request OTP
+  const handleRequestOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLocalLoading(true);
+
+    try {
+      await onRequestOTP(formData.email);
+      setSuccess("OTP sent successfully to your email!");
+      setTimeout(() => {
+        setStep(2);
+        setSuccess("");
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || "Failed to send OTP");
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
+  // Step 2: Verify OTP and Reset Password
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!formData.otp) {
+      setError("OTP is required");
+      return;
+    }
+
+    if (formData.newPassword.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    if (formData.newPassword !== formData.confirmNewPassword) {
+      setError("New passwords don't match");
+      return;
+    }
+
+    setLocalLoading(true);
+    try {
+      await onResetPassword(formData.email, formData.otp, formData.newPassword);
+      setSuccess(
+        "Password reset successfully! Please login with your new password."
+      );
+      // Clear the form after successful reset
+      setFormData((prev) => ({
+        ...prev,
+        otp: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      }));
+
+      // Go back to step 1 after a delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err: any) {
+      setError(err.message || "Failed to reset password");
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <div>
+      {error && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+          {success}
+        </div>
+      )}
+
+      {step === 1 ? (
+        // Step 1: Request OTP Form
+        <form className="space-y-6" onSubmit={handleRequestOTP}>
+          <StyledInput
+            leftIcon={<Mail size={18} />}
+            type="email"
+            name="email"
+            label="Email Address"
+            placeholder="Enter your email address"
+            value={formData.email}
+            onChange={handleChange}
+            disabled={!!formData.email} // Disable if email is already set from localStorage
+          />
+
+          <FormButton type="submit" disabled={localLoading || loading}>
+            {localLoading || loading ? "Sending OTP..." : "Send OTP"}
+          </FormButton>
+        </form>
+      ) : (
+        // Step 2: Verify OTP and Reset Password Form
+        <form className="space-y-6" onSubmit={handleResetPassword}>
+          <StyledInput
+            leftIcon={<Mail size={18} />}
+            type="email"
+            name="email"
+            label="Email Address"
+            placeholder="Enter your email address"
+            value={formData.email}
+            disabled
+          />
+
+          <StyledInput
+            leftIcon={<Lock size={18} />}
+            type="text"
+            name="otp"
+            label="OTP"
+            placeholder="Enter the OTP sent to your email"
+            value={formData.otp}
+            onChange={handleChange}
+          />
+
+          <StyledInput
+            leftIcon={<Lock size={18} />}
+            type="password"
+            name="newPassword"
+            label="New Password"
+            placeholder="Enter your new password"
+            value={formData.newPassword}
+            onChange={handleChange}
+          />
+
+          <StyledInput
+            leftIcon={<Lock size={18} />}
+            type="password"
+            name="confirmNewPassword"
+            label="Confirm New Password"
+            placeholder="Confirm your new password"
+            value={formData.confirmNewPassword}
+            onChange={handleChange}
+          />
+
+          <div className="flex space-x-4">
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={() => setStep(1)}
+              disabled={localLoading || loading}
+            >
+              Back
+            </FormButton>
+            <FormButton type="submit" disabled={localLoading || loading}>
+              {localLoading || loading
+                ? "Resetting Password..."
+                : "Reset Password"}
+            </FormButton>
+          </div>
+        </form>
+      )}
+    </div>
   );
 };

@@ -1,12 +1,20 @@
 // types.ts
 export interface Transaction {
-  id: string;
+  _id: string;
   amount: number;
+  smslink: string;
   txn_id: string;
   paymentStatus: "pending" | "completed" | "failed";
   paymentTransactionId: string;
   createdAt?: string;
   status?: "pending" | "completed" | "failed"; // Add this if needed for compatibility
+}
+
+export interface BankDetails {
+  accountHolder: String;
+  accountNumber: String;
+  ifscCode: String;
+  bankName: String;
 }
 
 export interface PaymentResponse {
@@ -25,6 +33,19 @@ export interface FeatureCardProps {
   title: string;
   description: string;
 }
-interface TransactionsProps {
-  transactions: Transaction[];
+
+export type UTRStatus = "Pending" | "Approved" | "Rejected";
+
+export interface UserData {
+  _id: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  userRole: string;
+  utrNumber: string;
+  utrStatus: UTRStatus;
+  accountHolder: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
 }
