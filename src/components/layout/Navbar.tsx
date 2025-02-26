@@ -61,7 +61,7 @@ const Navbar = () => {
       },
     },
     open: {
-      opacity: 1,
+      opacity: 50,
       x: 0,
       transition: {
         duration: 0.2,
@@ -73,21 +73,31 @@ const Navbar = () => {
     <>
       {isAuthenticated ? (
         <>
-          <motion.div whileHover="hover" variants={navItemVariants}>
-            <Link
-              href="/dashboard"
-              className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>Dashboard</span>
-            </Link>
-          </motion.div>
+<motion.div whileHover="hover" variants={navItemVariants}>
+  <button
+    onClick={() => setIsMobileMenuOpen(false)}
+    className="absolute top-2 right-2 text-emerald-400 hover:text-emerald-600 transition-colors rounded-full p-2"
+    aria-label="Close Menu"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+  <Link
+    href="/dashboard"
+    className="flex items-center space-x-2 px-4 py-2 text-emerald-400 hover:text-emerald-400 transition-colors"
+    onClick={() => setIsMobileMenuOpen(false)}
+  >
+    <CreditCard className="w-4 h-4" />
+    <span>Dashboard</span>
+  </Link>
+</motion.div>
+
           {user && user?.userRole === "Admin" && (
             <motion.div whileHover="hover" variants={navItemVariants}>
               <Link
                 href="/admin"
-                className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-emerald-400 hover:text-emerald-400 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <CreditCard className="w-4 h-4" />
@@ -99,7 +109,7 @@ const Navbar = () => {
           <motion.div whileHover="hover" variants={navItemVariants}>
             <Link
               href="/profile"
-              className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 text-emerald-400 hover:text-emerald-400 transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <User className="w-4 h-4" />
@@ -114,7 +124,7 @@ const Navbar = () => {
               setIsMobileMenuOpen(false);
               logout();
             }}
-            className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-red-400 transition-colors w-full"
+            className="flex items-center space-x-2 px-4 py-2 text-emerald-400 hover:text-red-400 transition-colors w-full"
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
@@ -124,7 +134,7 @@ const Navbar = () => {
         <motion.div whileHover="hover" variants={navItemVariants}>
           <Link
             href="/"
-            className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-emerald-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 rounded-lg"
+            className="flex items-center space-x-2 px-4 py-2 text-emerald-400 hover:text-emerald-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 rounded-lg"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <User className="w-4 h-4" />
@@ -180,7 +190,7 @@ const Navbar = () => {
             variants={mobileMenuVariants}
             className="fixed inset-y-0 right-0 w-64 bg-gray-900/95 backdrop-blur-lg border-l border-gray-800/50 md:hidden"
           >
-            <div className="flex flex-col py-4 space-y-1">
+            <div className="flex flex-col py-4 space-y-1 bg-black text-emerald-400 ">
               <NavItems />
             </div>
           </motion.div>

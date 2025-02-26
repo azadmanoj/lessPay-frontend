@@ -126,7 +126,7 @@ const HomePage = () => {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      router.replace("/profile");
+      router.replace("/dashboard");
     }
   }, [isAuthenticated, loading, router]);
 
