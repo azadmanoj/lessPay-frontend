@@ -1,1 +1,1 @@
-# lessPay-frontend
+# PaymentBuddy-frontend

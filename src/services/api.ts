@@ -1,33 +1,42 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "./axios";
+import { toast } from "react-toastify";
 
-
-  const ENDPOINT = `https://lesspay-backend-1.onrender.com`
-  // const ENDPOINT = `http://localhost:5000`;
+const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
 export const api = {
   signUp: async (email: string, password: string) => {
-    const { data } = await axios.post(`${ENDPOINT}/auth/signup`, { email, password });
+    const { data } = await axios.post(`${ENDPOINT}/auth/signup`, {
+      email,
+      password,
+    });
     return data;
   },
 
   login: async (email: string, password: string) => {
     try {
-      const { data } = await axios.post(`${ENDPOINT}/auth/login`, { email, password });
-      if (!data.token) {
-        throw new Error(`Token not received from server`);
+      const { data } = await axios.post(`${ENDPOINT}/auth/login`, {
+        email,
+        password,
+      });
+      if (!data) {
+        toast.error(`Token not received from server`);
       }
 
       localStorage.setItem(`userData`, JSON.stringify(data));
       return data;
     } catch (error: any) {
-      throw new Error(error.message || `Login failed`);
+      toast.error(`Login failed`);
+      throw new Error(error.message || `Login Failed`);
     }
   },
 
   verifyOTP: async (email: string, otp: string) => {
     try {
-      const { data } = await axios.post(`${ENDPOINT}/auth/verify-otp`, { email, otp });
+      const { data } = await axios.post(`${ENDPOINT}/auth/verify-otp`, {
+        email,
+        otp,
+      });
       if (!data.token) {
         throw new Error(`Token not received from server`);
       }
@@ -40,7 +49,9 @@ export const api = {
   // Forgot password endpoints
   requestPasswordReset: async (email: string) => {
     try {
-      const { data } = await axios.post(`${ENDPOINT}/auth/forgot-password`, { email });
+      const { data } = await axios.post(`${ENDPOINT}/auth/forgot-password`, {
+        email,
+      });
       return data;
     } catch (error: any) {
       throw new Error(error.message || `Failed to request password reset`);
@@ -65,7 +76,6 @@ export const api = {
     try {
       const { data } = await axios.get(`${ENDPOINT}/profile`);
       if (!data) {
-        console.log("🚀 ~ getProfile: ~ data:", data)
         throw new Error(`No profile data received`);
       }
       return data;
@@ -74,7 +84,6 @@ export const api = {
       throw new Error(error.message || `Failed to fetch profile`);
     }
   },
-
 
   getUsers: async () => {
     try {
@@ -108,16 +117,12 @@ export const api = {
   },
 };
 
-
-
 interface BankAccountData {
   accountHolder: string;
   accountNumber: string;
   ifscCode: string;
   bankName: string;
 }
-
-
 
 interface PersonalInfoData {
   fullName: string;

@@ -13,9 +13,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { withAuth } from "@/components/hoc/withAuth";
-import { Transactions } from "@/components/transactions/Transactions";
 import { Transaction, FeatureCardProps } from "../../../type";
 import axios from "axios";
+import { Transactions } from "@/components/transactions/Transactions";
 
 // Enhanced animation variants
 const fadeIn = {
@@ -99,10 +99,9 @@ const DashboardPage: React.FC = () => {
     mobileNumber: false,
     email: false,
   });
-  const userId = "7880001415";
+  const userId = process.env.NEXT_PUBLIC_USER_ID;
 
-  const ENDPOINT = "https://lesspay-backend-1.onrender.com"
-  // const ENDPOINT = "http://localhost:5000";
+  const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
   useEffect(() => {
     fetchTransactions();
@@ -113,7 +112,7 @@ const DashboardPage: React.FC = () => {
       const userData = localStorage.getItem("userData");
 
       if (!userData) {
-        throw new Error("User data not found in localStorage");
+        throw new Error("User Not Found!");
       }
 
       // Parse the data and get the user id from the user object
@@ -470,14 +469,18 @@ const DashboardPage: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
-          className="mt-16 mb-10 bg-gray-800/50 rounded-xl backdrop-blur-sm border border-gray-700 overflow-hidden shadow-xl"
+          className="mt-16 mb-20 bg-gray-800/50 rounded-xl  backdrop-blur-sm border border-gray-700 overflow-hidden shadow-xl"
         >
-          <div className="p-4 bg-gray-800/70 border-b border-gray-700">
+          <div className="p-4 bg-gray-800/70 border-b  flex justify-between border-gray-700">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-emerald-400" />
               Recent Transactions
             </h2>
+            <p className="text-lg font-medium text-emerald-400 mt-2 p-2 border-l-4 border-emerald-500 bg-gray-900/60">
+              Payment will be transfer only on bank working days
+            </p>
           </div>
+
           <Transactions transactions={transactions} />
         </motion.div>
 

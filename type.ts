@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-wrapper-object-types */
 // types.ts
 export interface Transaction {
   _id: string;
@@ -39,6 +41,7 @@ export type UTRStatus = "Pending" | "Approved" | "Rejected";
 export interface UserData {
   _id: string;
   name: string;
+  fullName: string;
   email: string;
   phoneNumber: string;
   userRole: string;
@@ -47,5 +50,5 @@ export interface UserData {
   accountHolder: string;
   accountNumber: string;
   ifscCode: string;
-  bankName: string;
+  bankDetails: BankDetails;
 }

@@ -43,7 +43,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [error, setError] = useState(externalError || "");
   const [success, setSuccess] = useState("");
 
-  const ENDPOINT = "https://lesspay-backend-1.onrender.com"
+  const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
+
   // const ENDPOINT = "http://localhost:5000";
 
   const fadeIn = {
@@ -140,7 +141,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
     try {
       const userData = localStorage.getItem("userData");
-      console.log("🚀 ~ userData:", userData);
 
       if (!userData) {
         throw new Error("User data not found in localStorage");
@@ -148,7 +148,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
       // Parse the data and get the user info from the user object
       const user = JSON.parse(userData);
-      console.log("🚀 ~ user:", user);
       const email = user.email;
 
       const requestData: ProfileUpdateData = {
@@ -156,7 +155,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         ...data,
       };
 
-      const response = await fetch(`${ENDPOINT}/auth/update-profile`, {
+      const response = await fetch(`${ENDPOINT}/api/update-profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -220,7 +219,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
               Profile Settings
             </h1>
-            <p className="text-gray-400 text-sm md:text-base">
+            <p className="text-gray-700 text-sm md:text-base">
               Manage your account settings and preferences
             </p>
           </div>
@@ -233,7 +232,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             onChange={(e) => setActiveTab(e.target.value)}
             className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           >
-            {["personal",  "bank", "reset-password"].map((tab) => (
+            {["personal", "bank", "reset-password"].map((tab) => (
               <option key={tab} value={tab}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </option>
@@ -243,7 +242,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
         {/* Desktop Tabs */}
         <div className="hidden md:flex space-x-4 border-b border-gray-700 mb-6">
-          {["personal",  "bank", "reset-password"].map((tab) => (
+          {["personal", "bank", "reset-password"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -272,12 +271,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               initialData={profile}
             />
           )}
-         
+
           {activeTab === "bank" && (
             <BankDetailsForm
               onSubmit={(bankData) =>
                 handleUpdateProfile({ bankDetails: bankData }, "bank account")
               }
+              initialBankDetails={profile?.bankDetails}
               loading={loading || externalLoading}
             />
           )}
@@ -341,6 +341,15 @@ const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
     email: initialData?.email || "",
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setForm({
+        fullName: initialData.fullName || "",
+        email: initialData.email || "",
+      });
+    }
+  }, [initialData]);
+
   return (
     <form
       className="space-y-6"
@@ -371,22 +380,34 @@ const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
   );
 };
 
-
 // Bank Details Form Component
 const BankDetailsForm: React.FC<{
   onSubmit: (data: BankAccountData) => void;
+  initialBankDetails?: BankAccountData;
   loading?: boolean;
-}> = ({ onSubmit, loading }) => {
+}> = ({ onSubmit, initialBankDetails, loading }) => {
   const [form, setForm] = useState<BankAccountData>({
-    accountHolder: "",
-    accountNumber: "",
-    ifscCode: "",
-    bankName: "",
+    accountHolder: initialBankDetails?.accountHolder || "",
+    accountNumber: initialBankDetails?.accountNumber || "",
+    ifscCode: initialBankDetails?.ifscCode || "",
+    bankName: initialBankDetails?.bankName || "",
   });
+
+  // Update form when initialBankDetails changes
+  useEffect(() => {
+    if (initialBankDetails) {
+      setForm({
+        accountHolder: initialBankDetails.accountHolder || "",
+        accountNumber: initialBankDetails.accountNumber || "",
+        ifscCode: initialBankDetails.ifscCode || "",
+        bankName: initialBankDetails.bankName || "",
+      });
+    }
+  }, [initialBankDetails]);
 
   return (
     <form
-      className="space-y-6"
+      className="space-y-6 h-[40vh] lg:h-[50vh] overflow-y-auto"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit(form);
@@ -425,7 +446,7 @@ const BankDetailsForm: React.FC<{
         onChange={(e: any) => setForm({ ...form, bankName: e.target.value })}
       />
       <FormButton type="submit" disabled={loading}>
-        {loading ? "Adding..." : "Add Bank Account"}
+        {loading ? "Saving..." : "Save Bank Details"}
       </FormButton>
     </form>
   );
@@ -440,7 +461,8 @@ export const ResetPasswordForm: React.FC<{
     newPassword: string
   ) => Promise<void>;
   loading?: boolean;
-}> = ({ onRequestOTP, onResetPassword, loading = false }) => {
+  login?: boolean;
+}> = ({ onRequestOTP, onResetPassword, loading, login = false }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     email: "",
@@ -550,22 +572,33 @@ export const ResetPasswordForm: React.FC<{
 
       {step === 1 ? (
         // Step 1: Request OTP Form
-        <form className="space-y-6" onSubmit={handleRequestOTP}>
-          <StyledInput
-            leftIcon={<Mail size={18} />}
-            type="email"
-            name="email"
-            label="Email Address"
-            placeholder="Enter your email address"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={!!formData.email} // Disable if email is already set from localStorage
-          />
+        <div className="">
+          <form className="space-y-6" onSubmit={handleRequestOTP}>
+            <StyledInput
+              leftIcon={<Mail size={18} />}
+              type="email"
+              name="email"
+              label="Email Address"
+              placeholder="Enter your email address"
+              value={formData.email}
+              onChange={handleChange}
+            />
 
-          <FormButton type="submit" disabled={localLoading || loading}>
-            {localLoading || loading ? "Sending OTP..." : "Send OTP"}
-          </FormButton>
-        </form>
+            <FormButton type="submit" disabled={localLoading || loading}>
+              {localLoading || loading ? "Sending OTP..." : "Send OTP"}
+            </FormButton>
+          </form>
+          {login && (
+            <div className="mt-3">
+              <FormButton
+                onClick={() => window.location.reload()} // Use window.location.reload() to reload the page
+                disabled={localLoading || loading}
+              >
+                Back To Login
+              </FormButton>
+            </div>
+          )}
+        </div>
       ) : (
         // Step 2: Verify OTP and Reset Password Form
         <form className="space-y-6" onSubmit={handleResetPassword}>

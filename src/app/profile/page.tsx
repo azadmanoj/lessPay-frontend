@@ -36,7 +36,6 @@ const ProfilePage = () => {
   };
 
   const handleAddBankAccount = async (data: any) => {
-    console.log("🚀 ~ handleAddBankAccount ~ data:", data)
     setLoading(true);
     try {
       await api.updateBankDetails(data);

@@ -8,10 +8,9 @@ import { OTPScreen } from "@/components/auth/OTPScreen";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { toast, ToastContainer } from "react-toastify";
 
-
-const ENDPOINT = "https://lesspay-backend-1.onrender.com"
-// const ENDPOINT = "http://localhost:5000";
+const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
 const HomePage = () => {
   const { login, isAuthenticated, loading } = useAuth();
@@ -20,6 +19,21 @@ const HomePage = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    // Function to disable right-click
+    const disableRightClick = (e: any) => {
+      e.preventDefault(); // Prevent right-click menu
+    };
+
+    // Add event listener to disable right-click
+    window.addEventListener("contextmenu", disableRightClick);
+
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener("contextmenu", disableRightClick);
+    };
+  }, []);
 
   const handleLoginSubmit = async (
     email: string,
@@ -40,15 +54,13 @@ const HomePage = () => {
           router.push("/dashboard");
           window.location.reload();
         } else {
-          throw new Error("Invalid login response");
+          toast.error("Invalid login response");
         }
       }
     } catch (err: any) {
-      console.error("Login error:", err);
       setError(err.message || "Authentication failed");
     }
   };
-
 
   const handleRequestOTP = async (email: string) => {
     setSuccess("");
@@ -105,12 +117,10 @@ const HomePage = () => {
         "Password reset successfully! Please login with your new password."
       );
     } catch (err) {
-     
       throw err;
     } finally {
     }
   };
-
 
   const handleOTPVerify = async (otpValue: string) => {
     setError("");
@@ -162,6 +172,7 @@ const HomePage = () => {
             />
           )}
         </div>
+        <ToastContainer />
       </div>
     );
   }

@@ -8,7 +8,7 @@ import { AuthProvider } from '@/context/AuthContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'LessPay - Payment Solutions',
+    title: 'PaymentBuddy - Payment Solutions',
     description: 'Simplified payment solutions for everyone',
 }
 

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { ResetPasswordForm } from "../profile/UserProfile";
+import { ToastContainer } from "react-toastify";
 
 interface LoginScreenProps {
   onSubmit: (
@@ -21,9 +22,6 @@ interface LoginScreenProps {
   ) => Promise<void>; // Function to reset the password
 }
 
-const ENDPOINT = "https://lesspay-backend-1.onrender.com"
-// const ENDPOINT = "http://localhost:5000";
-
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onSubmit,
   loading,
@@ -34,7 +32,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [password, setPassword] = useState("");
   const [isForgotPassword, setIsForgotPassword] = useState(false); // State to toggle between login and reset password
   const [success, setSuccess] = useState("");
-  
+  const [buttonLoading, setButtonLoading] = useState(false); // New state for button loading
+
+  const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
+
   const handleRequestOTP = async (email: string) => {
     setSuccess("");
 
@@ -90,15 +91,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         "Password reset successfully! Please login with your new password."
       );
     } catch (err) {
-     
       throw err;
     } finally {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(email, password, isNewUser);
+    setButtonLoading(true); // Set button loading state before submission
+    try {
+      await onSubmit(email, password, isNewUser);
+    } catch (error) {
+      // Handle error if needed
+    } finally {
+      setButtonLoading(false); // Reset button loading state after completion
+    }
   };
 
   if (isForgotPassword) {
@@ -107,9 +114,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         onRequestOTP={handleRequestOTP}
         onResetPassword={handlePasswordReset}
         loading={loading}
+        login={true}
       />
     );
   }
+
+  // Determine if we should show the loading state
+  const isLoading = loading || buttonLoading;
 
   return (
     <motion.div
@@ -125,7 +136,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         >
           <User className="w-8 h-8 text-emerald-400 mr-2" />
           <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-emerald-600 text-transparent bg-clip-text">
-            LessPay
+          PaymentBuddy
           </span>
         </motion.div>
         <h2 className="text-3xl font-bold text-white mb-2">
@@ -161,6 +172,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-gray-400"
                 placeholder="Enter your email address"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -178,18 +190,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-gray-400"
                 placeholder="Enter your password"
                 required
+                disabled={isLoading}
               />
             </div>
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: isLoading ? 1 : 1.02 }}
+            whileTap={{ scale: isLoading ? 1 : 0.98 }}
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="w-full flex items-center justify-center py-3 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all"
           >
-            {loading ? (
+            {isLoading ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
@@ -204,6 +217,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               type="button"
               onClick={() => setIsNewUser(!isNewUser)}
               className="text-emerald-400 hover:text-emerald-300 text-sm transition-colors"
+              disabled={isLoading}
             >
               {isNewUser
                 ? "Already have an account? Sign in"
@@ -216,13 +230,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <button
               type="button"
               onClick={() => setIsForgotPassword(true)} // Toggle to forgot password view
-              className="text-emerald-400  hover:text-emerald-300 text-sm transition-colors"
+              className="text-emerald-400 hover:text-emerald-300 text-sm transition-colors"
+              disabled={isLoading}
             >
               Forgot Password?
             </button>
           </div>
         </form>
       </motion.div>
+      <ToastContainer />
     </motion.div>
   );
 };
