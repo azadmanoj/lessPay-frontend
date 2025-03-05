@@ -67,7 +67,7 @@ const ContactPage = () => {
     {
       icon: Mail,
       title: "Email",
-      details: "support@paymentBuddy.com",
+      details: "support@paymentbuddy.in",
       delay: 0.3,
     },
     {
@@ -147,9 +147,9 @@ const ContactPage = () => {
             transition={{ delay: 0.2 }}
             className="space-y-8"
           >
-            {contactInfo.map((info) => (
+            {contactInfo.map((info,index) => (
               <motion.div
-                key={info.title}
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: info.delay }}

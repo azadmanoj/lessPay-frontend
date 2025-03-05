@@ -15,6 +15,7 @@ import {
 } from "react-feather";
 import { api } from "@/services/api";
 import Link from "next/link";
+import { toast, ToastContainer } from "react-toastify";
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -47,10 +48,6 @@ export const Transactions: React.FC<TransactionsProps> = ({
           paymentTransactionId: paymentTransactionId,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch payment status");
-      }
 
       const data = await response.json();
       if (data.status === "completed") {
@@ -88,6 +85,7 @@ export const Transactions: React.FC<TransactionsProps> = ({
   }, [safeTransactions]);
 
   const [user, setUser] = useState<UserData>();
+  console.log("🚀 ~ user:", user);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [bankDetailsComplete, setBankDetailsComplete] =
     useState<boolean>(false);
@@ -334,7 +332,7 @@ export const Transactions: React.FC<TransactionsProps> = ({
 
             return (
               <motion.div
-                key={transactionId}
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -394,11 +392,12 @@ export const Transactions: React.FC<TransactionsProps> = ({
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0, overflow: "hidden" }}
+                      initial={{ opacity: 0, height: 50, overflow: "hidden" }}
                       animate={{
                         opacity: 1,
                         height: "auto",
                         overflow: "visible",
+                        marginTop: 20,
                       }}
                       exit={{ opacity: 0, height: 0, overflow: "hidden" }}
                       transition={{ duration: 0.3 }}
@@ -485,36 +484,69 @@ export const Transactions: React.FC<TransactionsProps> = ({
 
                 <div className="flex justify-between items-center mt-4">
                   <div className="text-sm text-gray-300 max-w-sm">
-                    {status === "completed" && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3, duration: 0.5 }}
-                      >
-                        The Beneficiary will Receive the Amount of{" "}
-                        <span className="text-emerald-400 font-medium">
-                          ₹{transaction?.amount?.toFixed(2) || "0.00"}
-                        </span>{" "}
-                        on{" "}
-                        {transaction?.createdAt
-                          ? getFormattedNextWorkingDay(transaction.createdAt)
-                          : "N/A"}
-                      </motion.p>
-                    )}
+                    <div className="text-sm text-gray-300 max-w-sm">
+                      {transaction?.paymentTransferStatus === "pending" &&
+                        status === "completed" && (
+                          <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3, duration: 0.5 }}
+                          >
+                            The Beneficiary will Receive the Amount of{" "}
+                            <span className="text-emerald-400 font-medium">
+                              ₹
+                              {transaction?.receiveAmount?.toFixed(2) || "0.00"}
+                            </span>{" "}
+                            on{" "}
+                            {transaction?.createdAt
+                              ? getFormattedNextWorkingDay(
+                                  transaction.createdAt
+                                )
+                              : "N/A"}
+                          </motion.p>
+                        )}
+
+                      {transaction?.paymentTransferStatus === "completed" && (
+                        <motion.p
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3, duration: 0.5 }}
+                        >
+                          The Amount of{" "}
+                          <span className="text-emerald-400 font-medium">
+                            ₹{transaction?.receiveAmount?.toFixed(2) || "0.00"}
+                          </span>{" "}
+                          is transferred successfully to the Beneficiary.
+                        </motion.p>
+                      )}
+
+                      {status === "failed" && (
+                        <motion.p
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3, duration: 0.5 }}
+                        >
+                          Transaction Failed.
+                        </motion.p>
+                      )}
+                    </div>
                   </div>
+
                   <motion.div
                     className="text-right"
                     whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.2 }}
                   >
                     <span className="text-emerald-400 text-2xl font-bold">
-                      ₹{transaction?.amount?.toFixed(2) || "0.00"}
+                      ₹{transaction?.receiveAmount?.toFixed(2) || "0.00"}
                     </span>
                   </motion.div>
                 </div>
               </motion.div>
             );
           })}
+      <ToastContainer />
+
         </AnimatePresence>
       ) : (
         <motion.div
@@ -544,6 +576,7 @@ export const Transactions: React.FC<TransactionsProps> = ({
           </p>
         </motion.div>
       )}
+      <ToastContainer />
     </motion.div>
   );
 };

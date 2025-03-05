@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { ResetPasswordForm } from "../profile/UserProfile";
 import { ToastContainer } from "react-toastify";
+import Link from "next/link";
 
 interface LoginScreenProps {
   onSubmit: (
@@ -14,12 +15,12 @@ interface LoginScreenProps {
   ) => Promise<void>;
   loading: boolean;
   error: string;
-  onRequestOTP: (email: string) => Promise<any>; // Function to request OTP for reset password
+  onRequestOTP: (email: string) => Promise<any>;
   onResetPassword: (
     email: string,
     otp: string,
     newPassword: string
-  ) => Promise<void>; // Function to reset the password
+  ) => Promise<void>;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
@@ -30,9 +31,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [isNewUser, setIsNewUser] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isForgotPassword, setIsForgotPassword] = useState(false); // State to toggle between login and reset password
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [success, setSuccess] = useState("");
-  const [buttonLoading, setButtonLoading] = useState(false); // New state for button loading
+  const [buttonLoading, setButtonLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
@@ -40,7 +42,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setSuccess("");
 
     try {
-      // Using the actual API endpoint from the backend code
       const response = await fetch(`${ENDPOINT}/auth/forgot-password`, {
         method: "POST",
         headers: {
@@ -59,11 +60,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       return result;
     } catch (err) {
       throw err;
-    } finally {
     }
   };
 
-  // Handle password reset with OTP
   const handlePasswordReset = async (
     email: string,
     otp: string,
@@ -72,7 +71,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setSuccess("");
 
     try {
-      // Using the actual API endpoint from the backend code
       const response = await fetch(`${ENDPOINT}/auth/reset-password`, {
         method: "POST",
         headers: {
@@ -92,19 +90,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       );
     } catch (err) {
       throw err;
-    } finally {
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setButtonLoading(true); // Set button loading state before submission
+    setButtonLoading(true);
     try {
       await onSubmit(email, password, isNewUser);
     } catch (error) {
       // Handle error if needed
     } finally {
-      setButtonLoading(false); // Reset button loading state after completion
+      setButtonLoading(false);
     }
   };
 
@@ -119,7 +116,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     );
   }
 
-  // Determine if we should show the loading state
   const isLoading = loading || buttonLoading;
 
   return (
@@ -136,7 +132,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         >
           <User className="w-8 h-8 text-emerald-400 mr-2" />
           <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-emerald-600 text-transparent bg-clip-text">
-          PaymentBuddy
+            PaymentBuddy
           </span>
         </motion.div>
         <h2 className="text-3xl font-bold text-white mb-2">
@@ -195,11 +191,39 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           </div>
 
+          {isNewUser && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="terms-conditions"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mr-2 rounded text-emerald-500 focus:ring-emerald-500"
+              />
+              <label 
+                htmlFor="terms-conditions" 
+                className="text-sm text-gray-300"
+              >
+                I agree to the{" "}
+                <Link 
+                  href="/terms-conditions" 
+                  target="_blank" 
+                  className="text-emerald-400 hover:underline"
+                >
+                  Terms and Conditions
+                </Link>
+              </label>
+            </div>
+          )}
+
           <motion.button
             whileHover={{ scale: isLoading ? 1 : 1.02 }}
             whileTap={{ scale: isLoading ? 1 : 0.98 }}
             type="submit"
-            disabled={isLoading}
+            disabled={
+              isLoading || 
+              (isNewUser && !termsAccepted)
+            }
             className="w-full flex items-center justify-center py-3 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all"
           >
             {isLoading ? (
@@ -223,13 +247,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 ? "Already have an account? Sign in"
                 : "Don't have an account? Sign up"}
             </button>
-
-            {/* Forgot Password Button */}
           </div>
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setIsForgotPassword(true)} // Toggle to forgot password view
+              onClick={() => setIsForgotPassword(true)}
               className="text-emerald-400 hover:text-emerald-300 text-sm transition-colors"
               disabled={isLoading}
             >

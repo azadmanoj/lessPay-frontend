@@ -232,8 +232,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             onChange={(e) => setActiveTab(e.target.value)}
             className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           >
-            {["personal", "bank", "reset-password"].map((tab) => (
-              <option key={tab} value={tab}>
+            {["personal", "bank", "reset-password"].map((tab,index) => (
+              <option key={index} value={tab}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </option>
             ))}
@@ -455,7 +455,7 @@ const BankDetailsForm: React.FC<{
 // Export ResetPasswordForm component for use in other components
 export const ResetPasswordForm: React.FC<{
   onRequestOTP: (email: string) => Promise<any>;
-  onResetPassword: (
+  onResetPassword?: (
     email: string,
     otp: string,
     newPassword: string
@@ -527,10 +527,16 @@ export const ResetPasswordForm: React.FC<{
 
     setLocalLoading(true);
     try {
-      await onResetPassword(formData.email, formData.otp, formData.newPassword);
-      setSuccess(
-        "Password reset successfully! Please login with your new password."
-      );
+      if (onResetPassword) {
+        await onResetPassword(
+          formData.email,
+          formData.otp,
+          formData.newPassword
+        );
+        setSuccess(
+          "Password reset successfully! Please login with your new password."
+        );
+      }
       // Clear the form after successful reset
       setFormData((prev) => ({
         ...prev,

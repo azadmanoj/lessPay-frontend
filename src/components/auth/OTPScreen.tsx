@@ -1,20 +1,53 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Shield, ArrowRight } from 'lucide-react';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Shield, ArrowRight } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
 
 interface OTPScreenProps {
-  email: string;  // Changed from phone to email
+  email: string; // Changed from phone to email
   onSubmit: (otp: string) => Promise<void>;
   loading: boolean;
   error: string;
 }
 
-export const OTPScreen: React.FC<OTPScreenProps> = ({ email, onSubmit, loading, error }) => {
-  const [otp, setOtp] = useState('');
+const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
+
+export const OTPScreen: React.FC<OTPScreenProps> = ({
+  email,
+  onSubmit,
+  loading,
+  error,
+}) => {
+  const [otp, setOtp] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(otp);
+  };
+
+  const handleRequestOTP = async (email: string) => {
+    try {
+      // Using the actual API endpoint from the backend code
+      const response = await fetch(`${ENDPOINT}/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to send OTP");
+      }
+
+      toast.success("OTP sent successfully to your email!");
+      return result;
+    } catch (err) {
+      throw err;
+    } finally {
+    }
   };
 
   return (
@@ -73,8 +106,26 @@ export const OTPScreen: React.FC<OTPScreenProps> = ({ email, onSubmit, loading, 
               </>
             )}
           </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            // type="submit"
+            disabled={loading}
+            onClick={() => handleRequestOTP(email)}
+            className="w-full flex items-center justify-center py-3 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all"
+          >
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                Resend OTP
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </>
+            )}
+          </motion.button>
         </form>
       </motion.div>
+      <ToastContainer />
     </motion.div>
   );
 };

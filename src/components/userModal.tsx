@@ -28,6 +28,9 @@ import {
   ChevronDown,
 } from "react-feather";
 import Link from "next/link";
+import { toast, ToastContainer } from "react-toastify";
+import { useAuth } from "@/context/AuthContext";
+
 // Define the UserData type
 export interface UserData {
   _id: string;
@@ -62,7 +65,14 @@ const UserModal = ({
   activities: Activity[];
   onClose: () => void;
 }) => {
-  if (!user) return null;
+  const { logout } = useAuth();
+
+  
+   if (!user) {
+          toast.error("User Not Found!");
+          logout();
+          return;
+        }
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -93,6 +103,15 @@ const UserModal = ({
     animate: {
       scale: [1, 1.02, 1],
       transition: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+    },
+  };
+
+  const waveAnimation = {
+    initial: { pathLength: 0, pathOffset: 0 },
+    animate: {
+      pathLength: 1,
+      pathOffset: 0,
+      transition: { duration: 2, ease: "easeInOut" },
     },
   };
 
@@ -208,7 +227,7 @@ const UserModal = ({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch payment status");
+        toast.error("Failed to fetch payment status");
       }
 
       const data = await response.json();
@@ -246,6 +265,48 @@ const UserModal = ({
     fetchStatuses();
   }, [safeTransactions]);
 
+  const email = user.email;
+
+  const handlePaymentTransfer = async (
+    txn_id: string,
+    paymentTransferStatus: string
+  ) => {
+    try {
+      const response = await fetch(`${ENDPOINT}/api/update-transactions`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          txn_id, // Using txn_id here instead of transactionId
+          paymentTransferStatus: paymentTransferStatus,
+        }),
+      });
+
+      fetchTransactions(user._id);
+      if (!response.ok) {
+        const errorDetails = await response.json(); // Get additional error details from the server
+        throw new Error(
+          `Failed to update payment transfer status: ${
+            errorDetails.message || response.statusText
+          }`
+        );
+      }
+
+      // Update the state to reflect the new status
+      setTransactions((prevTransactions) =>
+        prevTransactions.map((transaction) =>
+          transaction.txn_id === txn_id // Compare using txn_id instead of transactionId
+            ? { ...transaction, paymentTransferStatus: "completed" }
+            : transaction
+        )
+      );
+    } catch (error) {
+      console.error("Error updating payment transfer status:", error);
+    }
+  };
+
   // Sort transactions by `createdAt` in descending order (latest first)
   const sortedTransactions = [...safeTransactions].sort((a, b) => {
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -269,11 +330,11 @@ const UserModal = ({
   const getBgGradient = (status: string = "pending") => {
     switch (status) {
       case "completed":
-        return "from-emerald-900/20 to-gray-800/90 border-l-4 border-emerald-400";
+        return "from-emerald-900/30 to-gray-800/90 border-l-4 border-emerald-400";
       case "pending":
-        return "from-amber-900/20 to-gray-800/90 border-l-4 border-yellow-400";
+        return "from-amber-900/30 to-gray-800/90 border-l-4 border-yellow-400";
       case "failed":
-        return "from-red-900/20 to-gray-800/90 border-l-4 border-red-400";
+        return "from-red-900/30 to-gray-800/90 border-l-4 border-red-400";
       default:
         return "from-gray-900/90 to-gray-800/90 border-l-4 border-gray-400";
     }
@@ -295,12 +356,19 @@ const UserModal = ({
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
+
+      // Get the hour in 12-hour format
+      let hours = date.getHours();
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12; // Convert to 12-hour format
+      if (hours === 0) hours = 12; // Handle midnight as 12 instead of 0
+
       return `${date.getDate()} ${date.toLocaleString("default", {
         month: "short",
-      })}, ${date.getFullYear()}  ${date
-        .getHours()
+      })}, ${date.getFullYear()}  ${hours.toString().padStart(2, "0")}:${date
+        .getMinutes()
         .toString()
-        .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+        .padStart(2, "0")} ${ampm}`;
     } catch (e) {
       console.error("Error formatting date:", e);
       return "Invalid Date"; // Return a fallback string instead of the error object
@@ -318,17 +386,15 @@ const UserModal = ({
     setExpandedId(expandedId === id ? null : id);
   };
 
-
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0  bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
       >
-        {/* Animated Background Elements */}
+        {/* Dynamic Background Elements */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <motion.div
             className="absolute w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl"
@@ -341,6 +407,20 @@ const UserModal = ({
             transition={{
               repeat: Infinity,
               duration: 15,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div
+            className="absolute w-96 h-96 bg-indigo-700/10 rounded-full blur-3xl"
+            style={{ bottom: "15%", left: "25%" }}
+            animate={{
+              x: [0, -20, 0],
+              y: [0, 15, 0],
+              opacity: [0.15, 0.25, 0.15],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 18,
               ease: "easeInOut",
             }}
           />
@@ -358,20 +438,61 @@ const UserModal = ({
               ease: "easeInOut",
             }}
           />
+          <motion.div
+            className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-emerald-500/10 to-transparent"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.5 }}
+          />
         </div>
 
         <motion.div
-          className="bg-gray-900/90 h-[75vh]  overflow-y-auto rounded-2xl shadow-2xl max-h-[90vh] w-full max-w-6xl overflow-hidden flex flex-col border border-gray-700"
+          className="bg-gray-900/90 h-[75vh] overflow-y-auto rounded-2xl shadow-2xl max-h-[90vh] w-full max-w-6xl overflow-hidden flex flex-col border border-gray-700"
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header with glass effect */}
-          <div className="bg-gradient-to-r  from-emerald-600/20 to-emerald-800/20 p-5 rounded-t-xl flex justify-between items-center backdrop-blur-md border-b border-emerald-500/20">
+          {/* Header with enhanced glass effect */}
+          <div className="relative bg-gradient-to-r from-emerald-600/20 to-emerald-800/20 p-5 rounded-t-xl flex justify-between items-center backdrop-blur-md border-b border-emerald-500/20 overflow-hidden">
+            {/* Animated background elements for header */}
             <motion.div
-              className="flex items-center gap-3"
+              className="absolute inset-0 opacity-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.2 }}
+              transition={{ duration: 1.5 }}
+            >
+              <svg width="100%" height="100%">
+                <motion.path
+                  d="M 0 50 Q 200 10, 400 50 Q 600 90, 800 50"
+                  fill="none"
+                  stroke="rgba(16, 185, 129, 0.3)"
+                  strokeWidth="2"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{
+                    pathLength: 1,
+                    opacity: 1,
+                    transition: { duration: 2, ease: "easeOut" },
+                  }}
+                />
+                <motion.path
+                  d="M 0 70 Q 200 110, 400 70 Q 600 30, 800 70"
+                  fill="none"
+                  stroke="rgba(16, 185, 129, 0.3)"
+                  strokeWidth="2"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{
+                    pathLength: 1,
+                    opacity: 1,
+                    transition: { delay: 0.5, duration: 2, ease: "easeOut" },
+                  }}
+                />
+              </svg>
+            </motion.div>
+
+            <motion.div
+              className="flex items-center gap-3 relative z-10"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
@@ -380,17 +501,28 @@ const UserModal = ({
                 variants={pulseAnimation}
                 initial="initial"
                 animate="animate"
-                className="bg-emerald-500/10 text-emerald-400 p-2 rounded-full border border-emerald-500/20"
+                className="bg-emerald-500/20 text-emerald-400 p-2 rounded-full border border-emerald-500/30 shadow-lg shadow-emerald-500/10"
               >
                 <User className="w-5 h-5" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-white">
-                {user.fullName.split(" ")[0]}'s Profile
-              </h2>
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  {user.fullName.split(" ")[0]}'s Profile
+                </h2>
+                <motion.div
+                  className="flex items-center text-xs text-emerald-300/70"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Activity className="w-3 h-3 mr-1" />
+                  Last updated: {new Date().toLocaleDateString()}
+                </motion.div>
+              </div>
             </motion.div>
             <motion.button
               onClick={onClose}
-              className="text-white bg-gray-800/60 hover:bg-gray-700/80 p-2 rounded-full transition-colors duration-300 border border-gray-700"
+              className="text-white bg-gray-800/60 hover:bg-gray-700/80 p-2 rounded-full transition-colors duration-300 border border-gray-700 relative z-10 shadow-lg"
               whileHover={{ rotate: 90, scale: 1.1 }}
               transition={{ duration: 0.2 }}
             >
@@ -403,13 +535,17 @@ const UserModal = ({
             <div className="flex flex-col md:flex-row gap-6">
               {/* Profile Section */}
               <motion.div
-                className="bg-gray-800/50 rounded-xl shadow-lg p-6 flex-1 border border-gray-700 backdrop-blur-sm"
+                className="bg-gray-800/50 rounded-xl shadow-xl p-6 flex-1 border border-gray-700 backdrop-blur-sm relative overflow-hidden"
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.1, duration: 0.5 }}
               >
+                {/* Decorative elements */}
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/5 rounded-full blur-2xl" />
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 rounded-full blur-2xl" />
+
                 <motion.div
-                  className="flex flex-col sm:flex-row items-center mb-6"
+                  className="flex flex-col sm:flex-row items-center mb-6 relative"
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -425,6 +561,7 @@ const UserModal = ({
                             className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-emerald-700 rounded-full blur-md opacity-70"
                             animate={{
                               opacity: [0.5, 0.8, 0.5],
+                              scale: [1, 1.05, 1],
                             }}
                             transition={{
                               repeat: Infinity,
@@ -445,6 +582,7 @@ const UserModal = ({
                             className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-emerald-700 rounded-full blur-md opacity-70"
                             animate={{
                               opacity: [0.5, 0.8, 0.5],
+                              scale: [1, 1.05, 1],
                             }}
                             transition={{
                               repeat: Infinity,
@@ -458,7 +596,7 @@ const UserModal = ({
                       )}
                     </motion.div>
                     <motion.div
-                      className="absolute bottom-0 right-0 bg-emerald-500 w-6 h-6 rounded-full border-2 border-gray-900 flex items-center justify-center"
+                      className="absolute bottom-0 right-0 bg-emerald-500 w-6 h-6 rounded-full border-2 border-gray-900 flex items-center justify-center shadow-lg"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: 0.5, type: "spring" }}
@@ -485,9 +623,9 @@ const UserModal = ({
                       {user.address || "Northridge, California(CA), 91326, USA"}
                     </motion.p>
                     <motion.div
-                      className="mt-3 inline-flex bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-medium border border-emerald-500/20"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      className="mt-3 inline-flex bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-medium border border-emerald-500/20 shadow-md"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.5 }}
                     >
                       <Sparkles className="w-3 h-3 mr-1" />
@@ -499,7 +637,7 @@ const UserModal = ({
                 </motion.div>
 
                 <motion.div
-                  className="space-y-4 divide-y divide-gray-700"
+                  className="space-y-4 divide-y divide-gray-700/50"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
@@ -510,10 +648,10 @@ const UserModal = ({
                     custom={0}
                   >
                     <motion.div
-                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300"
+                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300 shadow-lg"
                       whileHover={{
                         y: -5,
-                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
+                        boxShadow: "0 8px 16px rgba(16, 185, 129, 0.1)",
                       }}
                     >
                       <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mr-3 shadow-md">
@@ -527,10 +665,10 @@ const UserModal = ({
                       </div>
                     </motion.div>
                     <motion.div
-                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300"
+                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300 shadow-lg"
                       whileHover={{
                         y: -5,
-                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
+                        boxShadow: "0 8px 16px rgba(16, 185, 129, 0.1)",
                       }}
                     >
                       <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mr-3 shadow-md">
@@ -552,10 +690,13 @@ const UserModal = ({
                     animate="visible"
                   >
                     <motion.div
-                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300"
+                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300 shadow-lg"
                       variants={cardVariants}
                       custom={1}
-                      whileHover={{ x: 5 }}
+                      whileHover={{
+                        x: 5,
+                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
+                      }}
                     >
                       <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mr-3 shadow-md">
                         <Activity className="w-5 h-5 text-emerald-400" />
@@ -569,10 +710,13 @@ const UserModal = ({
                     </motion.div>
 
                     <motion.div
-                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300"
+                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300 shadow-lg"
                       variants={cardVariants}
                       custom={2}
-                      whileHover={{ x: 5 }}
+                      whileHover={{
+                        x: 5,
+                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
+                      }}
                     >
                       <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mr-3 shadow-md">
                         <Award className="w-5 h-5 text-emerald-400" />
@@ -586,10 +730,13 @@ const UserModal = ({
                     </motion.div>
 
                     <motion.div
-                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300"
+                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300 shadow-lg"
                       variants={cardVariants}
                       custom={3}
-                      whileHover={{ x: 5 }}
+                      whileHover={{
+                        x: 5,
+                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
+                      }}
                     >
                       <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mr-3 shadow-md">
                         <Mail className="w-5 h-5 text-emerald-400" />
@@ -603,10 +750,13 @@ const UserModal = ({
                     </motion.div>
 
                     <motion.div
-                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300"
+                      className="flex items-center p-3 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-emerald-500/30 transition-colors duration-300 shadow-lg"
                       variants={cardVariants}
                       custom={4}
-                      whileHover={{ x: 5 }}
+                      whileHover={{
+                        x: 5,
+                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.1)",
+                      }}
                     >
                       <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mr-3 shadow-md">
                         <Phone className="w-5 h-5 text-emerald-400" />
@@ -667,292 +817,185 @@ const UserModal = ({
 
               {/* Transactions Section */}
               <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6  h-[60vh]  overflow-y-auto"
-    >
-      {!user.bankDetails && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-gradient-to-r from-blue-800/80 to-indigo-800/80 rounded-lg p-5 shadow-lg border-l-4 border-yellow-400"
-        >
-          <div className="flex items-start space-x-4">
-            <motion.div
-              className="p-2 bg-yellow-400 rounded-full"
-              animate={{
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                repeatDelay: 2,
-              }}
-            >
-              <AlertTriangle size={24} className="text-blue-900" />
-            </motion.div>
-            <div>
-              <h3 className="font-bold text-lg text-white mb-2">
-                Bank Details Required
-              </h3>
-              <p className="text-gray-200 mb-3">
-                Please add your bank account details from the profile section to
-                get your amount credited.
-              </p>
-              <Link href="/profile" passHref>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-white text-blue-800 px-4 py-2 rounded-md font-medium inline-flex items-center"
-                >
-                  <User size={16} className="mr-2" />
-                  Update Profile
-                </motion.button>
-              </Link>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <motion.div
-            className="flex flex-col items-center"
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            <motion.div
-              className="h-12 w-12 rounded-full border-4 border-blue-400 border-t-transparent"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            />
-            <div className="mt-4 text-gray-300">Loading transactions...</div>
-          </motion.div>
-        </div>
-      ) : sortedTransactions.length > 0 ? (
-        <AnimatePresence>
-          {sortedTransactions.map((transaction: Transaction, index: number) => {
-            const status =
-              transactionStatuses[transaction.paymentTransactionId] ||
-              "pending";
-            const transactionId = getTransactionKey(transaction, index);
-            const isExpanded = expandedId === transactionId;
-
-            return (
-              <motion.div
-                key={transactionId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                layout
-                className={`bg-gradient-to-br ${getBgGradient(
-                  status
-                )} rounded-lg p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-300 mb-4`}
-                onClick={() => toggleExpand(transactionId)}
+                className="bg-gray-800/50 rounded-xl shadow-xl p-6 flex-1 border border-gray-700 backdrop-blur-sm relative overflow-hidden"
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
               >
-                <div className="flex justify-between items-center mb-4">
-                  <div className="text-gray-300">
-                    {transaction?.createdAt
-                      ? formatDate(transaction.createdAt)
-                      : "N/A"}
+                {/* Decorative elements */}
+                <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/5 rounded-full blur-2xl" />
+                <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-emerald-500/5 rounded-full blur-2xl" />
+
+                <motion.div
+                  className="flex items-center gap-3 mb-6"
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.div
+                    variants={pulseAnimation}
+                    initial="initial"
+                    animate="animate"
+                    className="bg-indigo-500/20 text-indigo-400 p-2 rounded-full border border-indigo-500/30 shadow-lg shadow-indigo-500/10"
+                  >
+                    <CreditCard className="w-5 h-5" />
+                  </motion.div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Transactions
+                    </h2>
+                    <motion.div
+                      className="flex items-center text-xs text-indigo-300/70"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      Last 30 days
+                    </motion.div>
                   </div>
-                  <motion.div
-                    animate={{ rotate: isExpanded ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-gray-400"
-                  >
-                    <ChevronDown size={18} />
-                  </motion.div>
-                </div>
-
-                <motion.div className="mb-4">
-                  <motion.h2
-                    className="text-xl font-bold text-white mb-2"
-                    initial={{ opacity: 0.8 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {user?.fullName || (
-                      <span className="text-yellow-400 flex items-center">
-                        <User size={16} className="mr-2" /> Account details
-                        missing
-                      </span>
-                    )}
-                  </motion.h2>
-
-                  <motion.div
-                    className={`flex items-center ${getStatusColor(status)}`}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {getStatusIcon(status)}
-                    <span className="text-lg font-medium">
-                      {status === "completed"
-                        ? "Your Order is success"
-                        : status === "pending"
-                        ? "Your Order is pending"
-                        : "Your Order failed"}
-                    </span>
-                  </motion.div>
                 </motion.div>
 
-                <AnimatePresence>
-                  {isExpanded && (
+                <motion.div
+                  className="space-y-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {loading ? (
                     <motion.div
-                      initial={{ opacity: 0, height: 0, overflow: "hidden" }}
-                      animate={{
-                        opacity: 1,
-                        height: "auto",
-                        overflow: "visible",
-                      }}
-                      exit={{ opacity: 0, height: 0, overflow: "hidden" }}
-                      transition={{ duration: 0.3 }}
+                      className="flex items-center justify-center p-6"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                     >
-                      <div className="space-y-2 text-gray-300 mb-4">
-                        <div className="flex justify-between">
-                          <span>Acc Holder Name</span>
-                          <span className="font-medium">
-                            {user?.bankDetails?.accountHolder || (
-                              <span className="text-yellow-400">
-                                Not provided
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Acc No</span>
-                          <span className="font-medium">
-                            {user?.bankDetails?.accountNumber || (
-                              <span className="text-yellow-400">
-                                Not provided
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>IFSC</span>
-                          <span className="font-medium">
-                            {user?.bankDetails?.ifscCode || (
-                              <span className="text-yellow-400">
-                                Not provided
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Order ID</span>
-                          <span className="font-medium">
-                            {transaction?.txn_id || "N/A"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {status === "pending" &&
-                        transaction.smslink &&
-                        transaction.createdAt && (
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="mb-4"
-                          >
-                            {isSmsLinkExpired(transaction.createdAt) ? (
-                              <span className="bg-gray-900/70 text-red-400 px-3 py-2 rounded-xl text-sm font-medium block w-1/4 text-center">
-                                Link Expired
-                              </span>
-                            ) : (
-                              <a
-                                href={transaction.smslink}
-                                className="bg-gray-900/70 text-emerald-400 px-3 py-2 rounded-xl text-sm font-medium block w-1/4 text-center"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                View Payment Link →
-                              </a>
-                            )}
-                          </motion.div>
-                        )}
-
-                      <div className="mt-4 pt-4 border-t border-gray-700">
-                        <div className="flex items-center">
-                          <CreditCard
-                            size={16}
-                            className="mr-2 text-blue-400"
-                          />
-                          <span className="text-gray-300">
-                            Payment will be processed within 24 hours of
-                            completion
-                          </span>
-                        </div>
-                      </div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
                     </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex justify-between items-center mt-4">
-                  <div className="text-sm text-gray-300 max-w-sm">
-                    {status === "completed" && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3, duration: 0.5 }}
+                  ) : error ? (
+                    <motion.div
+                      className="flex items-center justify-center p-6 bg-red-900/20 rounded-lg border border-red-700/50"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <AlertTriangle className="w-5 h-5 text-red-400 mr-2" />
+                      <p className="text-red-400">{error}</p>
+                    </motion.div>
+                  ) : (
+                    sortedTransactions.map((transaction, index) => (
+                      <motion.div
+                        key={index}
+                        className={`p-4 rounded-lg ${getBgGradient(
+                          transactionStatuses[transaction.paymentTransactionId]
+                        )} shadow-lg hover:shadow-xl transition-shadow duration-300`}
+                        variants={cardVariants}
+                        custom={index}
+                        whileHover={{ y: -5 }}
                       >
-                        The Beneficiary will Receive the Amount of{" "}
-                        <span className="text-emerald-400 font-medium">
-                          ₹{transaction?.amount?.toFixed(2) || "0.00"}
-                        </span>{" "}
-                        on{" "}
-                        {transaction?.createdAt
-                          ? getFormattedNextWorkingDay(transaction.createdAt)
-                          : "N/A"}
-                      </motion.p>
-                    )}
-                  </div>
-                  <motion.div
-                    className="text-right"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span className="text-emerald-400 text-2xl font-bold">
-                      ₹{transaction?.amount?.toFixed(2) || "0.00"}
-                    </span>
-                  </motion.div>
-                </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            {getStatusIcon(
+                              transactionStatuses[
+                                transaction.paymentTransactionId
+                              ]
+                            )}
+                            <div>
+                              <p className="text-xs text-gray-500">
+                                {transaction?.createdAt
+                                  ? formatDate(transaction.createdAt)
+                                  : "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p
+                              className={`text-sm font-semibold ${getStatusColor(
+                                transactionStatuses[
+                                  transaction.paymentTransactionId
+                                ]
+                              )}`}
+                            >
+                              {transaction.receiveAmount
+                                ? `$${transaction.receiveAmount.toFixed(2)}`
+                                : "N/A"}
+                            </p>
+                            <div className="flex flex-col items-center gap-2">
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    transaction.paymentTransferStatus ===
+                                    "completed"
+                                  }
+                                  onChange={() =>
+                                    handlePaymentTransfer(
+                                      transaction.txn_id,
+                                      transaction.paymentTransferStatus ===
+                                        "pending"
+                                        ? "completed"
+                                        : "pending"
+                                    )
+                                  }
+                                  className="sr-only"
+                                />
+                                <div className="w-11 h-6  bg-gray-700 rounded-full border border-gray-600 toggle-bg">
+                                  <div
+                                    className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform ${
+                                      transaction.paymentTransferStatus ===
+                                      "completed"
+                                        ? "translate-x-5 bg-emerald-500"
+                                        : "bg-gray-400"
+                                    }`}
+                                  />
+                                </div>
+                              </label>
+                              <span className="text-sm  text-gray-400">
+                                {transaction.paymentTransferStatus ===
+                                "completed"
+                                  ? "Completed"
+                                  : "Pending"}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => toggleExpand(transaction._id)}
+                              className="text-gray-400 hover:text-gray-200 transition-colors"
+                            >
+                              <ChevronDown
+                                className={`w-4 h-4 transition-transform ${
+                                  expandedId === transaction._id
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                        <AnimatePresence>
+                          {expandedId === transaction._id && (
+                            <motion.div
+                              className="mt-4 pt-4 border-t border-gray-700/50"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                            >
+                              <p className="text-xs text-gray-400">
+                                Transaction ID:{" "}
+                                {transaction.paymentTransactionId}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-2">
+                                Expected Completion:{" "}
+                                {transaction?.createdAt
+                                  ? getFormattedNextWorkingDay(
+                                      transaction.createdAt
+                                    )
+                                  : "N/A"}
+                              </p>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    ))
+                  )}
+                </motion.div>
               </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center py-16 bg-gradient-to-br from-gray-900/70 to-gray-800/70 rounded-lg shadow-lg"
-        >
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 2,
-              ease: "easeInOut",
-            }}
-            className="inline-block mb-4"
-          >
-            <Clock size={64} className="mx-auto text-gray-500" />
-          </motion.div>
-          <h3 className="text-xl font-medium text-white mb-2">
-            No transactions found
-          </h3>
-          <p className="text-gray-400">
-            Your transaction history will appear here
-          </p>
-        </motion.div>
-      )}
-    </motion.div>
             </div>
           </div>
         </motion.div>

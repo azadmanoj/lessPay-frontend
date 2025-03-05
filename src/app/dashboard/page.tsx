@@ -16,6 +16,8 @@ import { withAuth } from "@/components/hoc/withAuth";
 import { Transaction, FeatureCardProps } from "../../../type";
 import axios from "axios";
 import { Transactions } from "@/components/transactions/Transactions";
+import { toast } from "react-toastify";
+import { useAuth } from "@/context/AuthContext";
 
 // Enhanced animation variants
 const fadeIn = {
@@ -83,6 +85,9 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 
 const DashboardPage: React.FC = () => {
   const [amount, setAmount] = useState<string>("");
+  const [receiveAmount, setReceiveAmount] = useState<string>("");
+  const { logout } = useAuth();
+
   const [id, setid] = useState<string>("");
   const [mobileNumber, setMobileNumber] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -103,6 +108,15 @@ const DashboardPage: React.FC = () => {
 
   const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
+
+  useEffect(() => {
+    if (amount && !loading) {
+      const calculatedAmount = Number(amount) - (Number(amount) * 1.85) / 100;
+      setReceiveAmount(calculatedAmount.toFixed(2)); // Update the state with the calculated amount
+    }
+  }, [amount, loading]); // Dependency array to recalculate when amount or loading changes
+
+
   useEffect(() => {
     fetchTransactions();
   }, []);
@@ -112,8 +126,11 @@ const DashboardPage: React.FC = () => {
       const userData = localStorage.getItem("userData");
 
       if (!userData) {
-        throw new Error("User Not Found!");
+        toast.error("User Not Found!");
+        logout();
+        return;
       }
+
 
       // Parse the data and get the user id from the user object
       const user = JSON.parse(userData);
@@ -158,6 +175,7 @@ const DashboardPage: React.FC = () => {
         `${ENDPOINT}/api/generate-payment-link`,
         {
           amount,
+          receiveAmount,
           mobileno: mobileNumber,
           email_id: email,
           invoice_id: Math.random().toString(36).substring(7),
@@ -430,6 +448,16 @@ const DashboardPage: React.FC = () => {
                 <span className="relative z-10">
                   {loading ? "Processing..." : `Pay Now ₹${amount || "0"}`}
                 </span>
+
+                {amount && !loading && (
+                  <div className="mt-2 text-sm text-gray-700">
+                    <span className="block text-white">Receive Amount:</span>
+                    <span className="text-xl font-semibold text-white">
+                      ₹{receiveAmount}
+                    </span>
+                  </div>
+                )}
+
               </motion.button>
             </div>
           </motion.div>

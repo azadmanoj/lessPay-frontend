@@ -236,7 +236,7 @@ const Navbar = () => {
                   }`}
                 >
                   <span className="text-2xl font-extrabold bg-gradient-to-r from-emerald-400 to-emerald-600 text-transparent bg-clip-text">
-                    $
+                  ₹
                   </span>
                 </div>
               </div>
@@ -248,7 +248,6 @@ const Navbar = () => {
                 </span>
               </div>
 
-              {/* Subtle pulsing dot */}
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse opacity-70 mt-5" />
             </Link>
           </div>

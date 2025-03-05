@@ -4,9 +4,11 @@
 export interface Transaction {
   _id: string;
   amount: number;
+  receiveAmount:number;
   smslink: string;
   txn_id: string;
   paymentStatus: "pending" | "completed" | "failed";
+  paymentTransferStatus: "pending" | "completed" | "failed";
   paymentTransactionId: string;
   createdAt?: string;
   status?: "pending" | "completed" | "failed"; // Add this if needed for compatibility
@@ -51,4 +53,5 @@ export interface UserData {
   accountNumber: string;
   ifscCode: string;
   bankDetails: BankDetails;
+  transaction: Transaction;
 }

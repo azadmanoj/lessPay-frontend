@@ -114,7 +114,7 @@ const AboutPage = () => {
         >
           {stats.map((stat, index) => (
             <motion.div
-              key={stat.label}
+              key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.2 }}
@@ -137,7 +137,7 @@ const AboutPage = () => {
         >
           {features.map((feature, index) => (
             <motion.div
-              key={feature.title}
+              key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.2 }}

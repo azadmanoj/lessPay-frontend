@@ -19,6 +19,7 @@ export const api = {
         email,
         password,
       });
+      console.log("🚀 ~ login: ~ data:", data)
       if (!data) {
         toast.error(`Token not received from server`);
       }
@@ -75,9 +76,7 @@ export const api = {
   getProfile: async () => {
     try {
       const { data } = await axios.get(`${ENDPOINT}/profile`);
-      if (!data) {
-        throw new Error(`No profile data received`);
-      }
+     
       return data;
     } catch (error: any) {
       console.error(`Profile fetch error:`, error);

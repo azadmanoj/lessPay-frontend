@@ -42,13 +42,24 @@ const HomePage = () => {
   ) => {
     setError("");
 
+    let result: any;
+
     try {
       if (isNewUser) {
         await api.signUp(email, password);
         setEmail(email);
         setStep("otp");
       } else {
-        const result = await api.login(email, password);
+        result = await api.login(email, password);
+
+        // Check if the user is verified, and if not, redirect to OTP step
+        if (!result.isVerified) {
+          setEmail(email);
+          setStep("otp");
+          return; // Exit early if the user is not verified
+        }
+
+        // If the user is verified, continue with the login process
         if (result.token) {
           await login(result.token);
           router.push("/dashboard");
@@ -128,7 +139,7 @@ const HomePage = () => {
     try {
       const result = await api.verifyOTP(email, otpValue);
       await login(result.token);
-      router.push("/dashboard");
+      router.push("/");
     } catch (err: any) {
       setError(err.message || "Invalid OTP");
     }
