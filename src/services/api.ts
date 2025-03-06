@@ -19,7 +19,6 @@ export const api = {
         email,
         password,
       });
-      console.log("🚀 ~ login: ~ data:", data)
       if (!data) {
         toast.error(`Token not received from server`);
       }

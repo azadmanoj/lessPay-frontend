@@ -85,7 +85,6 @@ export const Transactions: React.FC<TransactionsProps> = ({
   }, [safeTransactions]);
 
   const [user, setUser] = useState<UserData>();
-  console.log("🚀 ~ user:", user);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [bankDetailsComplete, setBankDetailsComplete] =
     useState<boolean>(false);
@@ -327,6 +326,7 @@ export const Transactions: React.FC<TransactionsProps> = ({
             const status =
               transactionStatuses[transaction.paymentTransactionId] ||
               "pending";
+
             const transactionId = getTransactionKey(transaction, index);
             const isExpanded = expandedId === transactionId;
 

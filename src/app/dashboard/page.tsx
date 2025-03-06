@@ -108,14 +108,12 @@ const DashboardPage: React.FC = () => {
 
   const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
-
   useEffect(() => {
     if (amount && !loading) {
       const calculatedAmount = Number(amount) - (Number(amount) * 1.85) / 100;
       setReceiveAmount(calculatedAmount.toFixed(2)); // Update the state with the calculated amount
     }
   }, [amount, loading]); // Dependency array to recalculate when amount or loading changes
-
 
   useEffect(() => {
     fetchTransactions();
@@ -130,7 +128,6 @@ const DashboardPage: React.FC = () => {
         logout();
         return;
       }
-
 
       // Parse the data and get the user id from the user object
       const user = JSON.parse(userData);
@@ -457,7 +454,6 @@ const DashboardPage: React.FC = () => {
                     </span>
                   </div>
                 )}
-
               </motion.button>
             </div>
           </motion.div>
@@ -540,9 +536,9 @@ const DashboardPage: React.FC = () => {
                     setShowPaymentModal(false);
                     location.reload(); // Reload the page
                   }}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-white z-10"
+                  className="absolute top-2  right-4  flex items-center justify-center cursor-pointer z-10"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-8 w-8 cursor-pointer" />
                 </button>
 
                 {paymentStatus === "pending" ? (
@@ -664,7 +660,7 @@ const DashboardPage: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="fixed top-4 right-4 bg-red-500/90 backdrop-blur-sm text-white px-6 py-3 rounded-lg shadow-lg border border-red-600/50 z-50"
+              className="fixed top-4 right-4 mt-20 bg-red-500/90 backdrop-blur-sm text-white px-6 py-3 rounded-lg shadow-lg border border-red-600/50 z-50"
             >
               <div className="flex items-center gap-2">
                 <X className="h-5 w-5" />
