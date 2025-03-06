@@ -144,7 +144,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       </div>
 
       <motion.div
-        className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 md:p-8 shadow-xl border border-gray-700"
+        className="bg-gray-800/50 backdrop-blur-sm mb-20 rounded-xl p-6 md:p-8 shadow-xl border border-gray-700"
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
       >

@@ -2,12 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  ArrowLeft,
-} from "lucide-react";
+import { CheckCircle2, AlertCircle, Eye, ArrowLeft } from "lucide-react";
 import { api } from "@/services/api";
 import { motion } from "framer-motion";
 import UserModal, { UserData, Activity } from "../../components/userModal";
@@ -21,7 +16,7 @@ interface Transaction {
   smslink: string;
   email?: string;
   paymentStatus: string;
-  createdAt?: string; // Allow createdAt to be optional (undefined is valid)
+  createdAt?: string;
 }
 
 const AdminPage: React.FC = () => {

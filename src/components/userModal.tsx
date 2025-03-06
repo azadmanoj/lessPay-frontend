@@ -620,7 +620,7 @@ const UserModal = ({
                       transition={{ delay: 0.4 }}
                     >
                       <span className="mr-1">🇮🇳</span>
-                      {user.address || "Northridge, California(CA), 91326, USA"}
+                      {user.address || "India"}
                     </motion.p>
                     <motion.div
                       className="mt-3 inline-flex bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-medium border border-emerald-500/20 shadow-md"
