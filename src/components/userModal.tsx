@@ -30,6 +30,7 @@ import {
 import Link from "next/link";
 import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/services/api";
 
 // Define the UserData type
 export interface UserData {
@@ -216,7 +217,7 @@ const UserModal = ({
 
   const fetchPaymentStatus = async (paymentTransactionId: any) => {
     try {
-      const response = await fetch(`${ENDPOINT}/api/payment-status`, {
+      const response = await fetch(`${ENDPOINT}/auth/payment-status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -272,27 +273,7 @@ const UserModal = ({
     paymentTransferStatus: string
   ) => {
     try {
-      const response = await fetch(`${ENDPOINT}/api/update-transactions`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          txn_id, // Using txn_id here instead of transactionId
-          paymentTransferStatus: paymentTransferStatus,
-        }),
-      });
-
-      fetchTransactions(user._id);
-      if (!response.ok) {
-        const errorDetails = await response.json(); // Get additional error details from the server
-        throw new Error(
-          `Failed to update payment transfer status: ${
-            errorDetails.message || response.statusText
-          }`
-        );
-      }
+      const response = api.updateTransactions(paymentTransferStatus)
 
       // Update the state to reflect the new status
       setTransactions((prevTransactions) =>

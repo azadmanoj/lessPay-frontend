@@ -47,6 +47,10 @@ export const api = {
     }
   },
 
+
+
+
+
   // Forgot password endpoints
   requestPasswordReset: async (email: string) => {
     try {
@@ -86,7 +90,7 @@ export const api = {
 
   getUsers: async () => {
     try {
-      const { data } = await axios.get(`${ENDPOINT}/api/users`);
+      const { data } = await axios.get(`${ENDPOINT}/auth/users`);
       if (!data) {
         throw new Error(`No users data received`);
       }
@@ -97,13 +101,13 @@ export const api = {
     }
   },
 
-  updatePersonalInfo: async (data: PersonalInfoData) => {
-    const response = await axios.put(`${ENDPOINT}api/update-profile`, data);
+  updatePersonalInfo: async (data: any) => {
+    const response = await axios.put(`${ENDPOINT}/auth/update-profile`, data);
     return response.data;
   },
 
   updatePassword: async (oldPassword: string, newPassword: string) => {
-    const response = await axios.put(`${ENDPOINT}api/update-profile`, {
+    const response = await axios.put(`${ENDPOINT}/auth/update-profile`, {
       oldPassword,
       newPassword,
     });
@@ -111,7 +115,13 @@ export const api = {
   },
 
   updateBankDetails: async (data: BankAccountData) => {
-    const response = await axios.put(`${ENDPOINT}api/update-profile`, data);
+    const response = await axios.put(`${ENDPOINT}/auth/update-profile`, data);
+    return response.data;
+  },
+
+
+  updateTransactions: async (data: string) => {
+    const response = await axios.put(`${ENDPOINT}/auth/update-transactions`, data);
     return response.data;
   },
 };
@@ -123,8 +133,5 @@ interface BankAccountData {
   bankName: string;
 }
 
-interface PersonalInfoData {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-}
+
+

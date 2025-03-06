@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { User, Mail, Lock, Building } from "lucide-react";
 import { motion } from "framer-motion";
+import { api } from "@/services/api";
 
 interface UserProfileProps {
   onUpdateProfile: (data: any) => Promise<void>;
@@ -155,18 +156,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         ...data,
       };
 
-      const response = await fetch(`${ENDPOINT}/api/update-profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
+      const response = api.updatePersonalInfo(requestData);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || `Failed to update ${updateType}`);
+      if (!response) {
+        throw new Error(`Failed to update ${updateType}`);
       }
 
       setSuccess(
@@ -189,7 +182,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     <div className="max-w-4xl mx-auto p-4 md:p-6 xl:pt-28 pt-20">
       <motion.div
         {...fadeIn}
-        className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 md:p-8 shadow-xl border border-gray-700"
+        className="bg-gray-800/50 backdrop-blur-sm mb-28 rounded-xl p-4 md:p-8 shadow-xl border border-gray-700"
       >
         {error && (
           <motion.div
@@ -232,7 +225,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             onChange={(e) => setActiveTab(e.target.value)}
             className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           >
-            {["personal", "bank", "reset-password"].map((tab,index) => (
+            {["personal", "bank", "reset-password"].map((tab, index) => (
               <option key={index} value={tab}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </option>
@@ -368,7 +361,7 @@ const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
         onChange={(e: any) => setForm({ ...form, fullName: e.target.value })}
       />
 
-<StyledInput
+      <StyledInput
         leftIcon={<User size={18} />}
         label="Phone Number"
         placeholder="Enter your Phone Number"
