@@ -5,10 +5,11 @@ import { toast } from "react-toastify";
 const ENDPOINT = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 
 export const api = {
-  signUp: async (email: string, password: string) => {
+  signUp: async (email: string, password: string, fullName: string) => {
     const { data } = await axios.post(`${ENDPOINT}/auth/signup`, {
       email,
       password,
+      fullName
     });
     return data;
   },
@@ -125,4 +126,5 @@ interface BankAccountData {
 interface PersonalInfoData {
   fullName: string;
   email: string;
+  phoneNumber: string;
 }

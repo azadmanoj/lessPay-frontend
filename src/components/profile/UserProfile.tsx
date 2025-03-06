@@ -339,6 +339,7 @@ const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
   const [form, setForm] = useState({
     fullName: initialData?.fullName || "",
     email: initialData?.email || "",
+    phoneNumber: initialData?.phoneNumber || "",
   });
 
   useEffect(() => {
@@ -346,6 +347,7 @@ const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
       setForm({
         fullName: initialData.fullName || "",
         email: initialData.email || "",
+        phoneNumber: initialData.phoneNumber || "",
       });
     }
   }, [initialData]);
@@ -365,6 +367,15 @@ const PersonalInfoForm = ({ onSubmit, loading, initialData }: any) => {
         value={form.fullName}
         onChange={(e: any) => setForm({ ...form, fullName: e.target.value })}
       />
+
+<StyledInput
+        leftIcon={<User size={18} />}
+        label="Phone Number"
+        placeholder="Enter your Phone Number"
+        value={form.phoneNumber}
+        onChange={(e: any) => setForm({ ...form, phoneNumber: e.target.value })}
+      />
+
       <StyledInput
         leftIcon={<Mail size={18} />}
         label="Email Address"

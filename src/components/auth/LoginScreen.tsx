@@ -11,7 +11,8 @@ interface LoginScreenProps {
   onSubmit: (
     email: string,
     password: string,
-    isNewUser: boolean
+    isNewUser: boolean,
+    fullName?: string
   ) => Promise<void>;
   loading: boolean;
   error: string;
@@ -31,6 +32,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [isNewUser, setIsNewUser] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState(""); // Add state for full name
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [success, setSuccess] = useState("");
   const [buttonLoading, setButtonLoading] = useState(false);
@@ -97,7 +99,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     e.preventDefault();
     setButtonLoading(true);
     try {
-      await onSubmit(email, password, isNewUser);
+      if (isNewUser) {
+        await onSubmit(email, password, isNewUser, fullName); // Pass fullName if new user
+      } else {
+        await onSubmit(email, password, isNewUser);
+      }
     } catch (error) {
       // Handle error if needed
     } finally {
@@ -155,6 +161,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {isNewUser && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-gray-400"
+                  placeholder="Enter your full name"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Email Address

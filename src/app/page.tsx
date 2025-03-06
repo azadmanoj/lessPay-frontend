@@ -38,7 +38,8 @@ const HomePage = () => {
   const handleLoginSubmit = async (
     email: string,
     password: string,
-    isNewUser: boolean
+    isNewUser: boolean,
+    fullName?: string
   ) => {
     setError("");
 
@@ -46,7 +47,7 @@ const HomePage = () => {
 
     try {
       if (isNewUser) {
-        await api.signUp(email, password);
+        await api.signUp(email, password, fullName || "");
         setEmail(email);
         setStep("otp");
       } else {
