@@ -106,9 +106,7 @@ export const OTPScreen: React.FC<OTPScreenProps> = ({
               </>
             )}
           </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             // type="submit"
             disabled={loading}
             onClick={() => handleRequestOTP(email)}
@@ -122,7 +120,7 @@ export const OTPScreen: React.FC<OTPScreenProps> = ({
                 <ArrowRight className="ml-2 h-5 w-5" />
               </>
             )}
-          </motion.button>
+          </button>
         </form>
       </motion.div>
       <ToastContainer />
