@@ -29,7 +29,7 @@ const AboutPage = () => {
     {
       icon: TrendingUp,
       title: "Lowest Interest Rate",
-      description: "Competitive rates starting at just 1.85%",
+      description: "Competitive rates starting at just 1.80%",
     },
     {
       icon: Users,

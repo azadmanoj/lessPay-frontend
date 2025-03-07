@@ -179,11 +179,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 xl:pt-28 pt-20">
+    <div className="max-w-4xl mx-auto p-4 md:p-6 xl:pt-28 pt-25 ">
       <motion.div
         {...fadeIn}
-        className="bg-gray-800/50 backdrop-blur-sm mb-28 rounded-xl p-4 md:p-8 shadow-xl border border-gray-700"
-      >
+        className="min-h-screen bg-gradient-to-br p-8 from-black via-gray-900 to-emerald-950 pt-16 md:pt-20 overflow-hidden"
+    >
         {error && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -212,7 +212,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
               Profile Settings
             </h1>
-            <p className="text-gray-700 text-sm md:text-base">
+            <p className="text-white text-sm md:text-base">
               Manage your account settings and preferences
             </p>
           </div>

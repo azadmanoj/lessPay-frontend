@@ -23,7 +23,7 @@ export default function RootLayout({
                 <AuthProvider>
                     <div className="flex flex-col min-h-screen">
                         <Navbar />
-                        <main className="flex-grow">
+                        <main className="flex-grow bg-gradient-to-br from-black via-gray-900 to-emerald-950">
                             {children}
                         </main>
                         <Footer />
