@@ -11,6 +11,7 @@ import {
   Clock,
   Sparkles,
   TrendingUp,
+  ArrowRight,
 } from "lucide-react";
 import { withAuth } from "@/components/hoc/withAuth";
 import { Transaction, FeatureCardProps } from "../../../type";
@@ -45,6 +46,20 @@ const pulseAnimation = {
   animate: {
     scale: [1, 1.02, 1],
     transition: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+  },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
   },
 };
 
@@ -85,6 +100,9 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 
 const DashboardPage: React.FC = () => {
   const [amount, setAmount] = useState<string>("");
+  const [chargeAmount, setChargeAmount] = useState(0);
+  const [gstAmount, setGstAmount] = useState(0);
+
   const [receiveAmount, setReceiveAmount] = useState<string>("");
   const { logout } = useAuth();
 
@@ -110,10 +128,22 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (amount && !loading) {
-      const calculatedAmount = Number(amount) - (Number(amount) * 1.85) / 100;
-      setReceiveAmount(calculatedAmount.toFixed(2)); // Update the state with the calculated amount
+      const amountNum = Number(amount);
+
+      // Calculate the charge (1.85% of the amount)
+      const charge = (amountNum * 1.85) / 100;
+
+      // Calculate the GST (18% of the charge)
+      const gst = (charge * 18) / 100;
+
+      // Calculate the received amount (amount - charge - GST)
+      const calculatedAmount = amountNum - charge - gst;
+
+      setChargeAmount(charge); // Set the charge amount
+      setGstAmount(gst); // Set the GST amount
+      setReceiveAmount(calculatedAmount.toFixed(2)); // Set the received amount
     }
-  }, [amount, loading]); // Dependency array to recalculate when amount or loading changes
+  }, [amount, loading]);
 
   useEffect(() => {
     fetchTransactions();
@@ -317,146 +347,234 @@ const DashboardPage: React.FC = () => {
             }}
           />
 
-          <motion.div
-            className="relative bg-gray-800/70 backdrop-blur-lg rounded-xl border border-gray-700 overflow-hidden shadow-2xl p-6 md:p-8"
-            whileHover={{
-              boxShadow:
-                "0 20px 25px -5px rgba(16, 185, 129, 0.15), 0 10px 10px -5px rgba(16, 185, 129, 0.1)",
-            }}
-          >
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-white text-xl font-semibold flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-emerald-400" />
-                  Make Payment
-                </h2>
-                <TrendingUp className="h-5 w-5 text-emerald-400" />
+<div className="relative p-6 md:p-8">
+                <motion.div
+                  className="space-y-8"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <motion.div
+                    className="flex justify-between items-center"
+                    variants={itemVariants}
+                  >
+                    <h2 className="text-white text-2xl font-bold flex items-center gap-2">
+                      <motion.div
+                        initial={{ rotate: -15 }}
+                        animate={{ rotate: 0 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <CreditCard className="h-6 w-6 text-emerald-400" />
+                      </motion.div>
+                      Make Payment
+                    </h2>
+                    <motion.div
+                      animate={{
+                        y: [0, -3, 0],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <TrendingUp className="h-6 w-6 text-emerald-400" />
+                    </motion.div>
+                  </motion.div>
+
+                  {
+                    <motion.div
+                      className="space-y-6"
+                      variants={containerVariants}
+                    >
+                      {/* Amount Input */}
+                      <motion.div variants={itemVariants}>
+                        <label className="block text-emerald-400 text-sm font-medium mb-2">
+                          Payment Amount
+                        </label>
+                        <input
+                          type="number"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className={`w-full px-6 py-4 rounded-xl bg-gray-800/90 border ${
+                            formErrors.amount
+                              ? "border-red-500"
+                              : "border-gray-700"
+                          } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
+                          placeholder="Enter amount (₹)"
+                        />
+                        {formErrors.amount && (
+                          <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="mt-1 text-red-400 text-sm"
+                          >
+                            Please enter a valid amount
+                          </motion.p>
+                        )}
+                      </motion.div>
+
+                      {/* Mobile Number Input */}
+                      <motion.div variants={itemVariants}>
+                        <label className="block text-emerald-400 text-sm font-medium mb-2">
+                          Mobile Number
+                        </label>
+                        <input
+                          type="tel"
+                          value={mobileNumber}
+                          onChange={(e) => setMobileNumber(e.target.value)}
+                          className={`w-full px-6 py-4 rounded-xl bg-gray-800/90 border ${
+                            formErrors.mobileNumber
+                              ? "border-red-500"
+                              : "border-gray-700"
+                          } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
+                          placeholder="Mobile Number (10 digits)"
+                          maxLength={10}
+                        />
+                        {formErrors.mobileNumber && (
+                          <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="mt-1 text-red-400 text-sm"
+                          >
+                            Please enter a valid 10-digit mobile number
+                          </motion.p>
+                        )}
+                      </motion.div>
+
+                      {/* Email Input */}
+                      <motion.div variants={itemVariants}>
+                        <label className="block text-emerald-400 text-sm font-medium mb-2">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className={`w-full px-6 py-4 rounded-xl bg-gray-800/90 border ${
+                            formErrors.email
+                              ? "border-red-500"
+                              : "border-gray-700"
+                          } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
+                          placeholder="Your Email Address"
+                        />
+                        {formErrors.email && (
+                          <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="mt-1 text-red-400 text-sm"
+                          >
+                            Please enter a valid email address
+                          </motion.p>
+                        )}
+                      </motion.div>
+
+                      {/* Fee Breakdown */}
+                      {amount && parseFloat(amount) > 0 && (
+                        <motion.div
+                          className="bg-gray-900/50 p-4 rounded-xl border border-gray-700/50"
+                          variants={itemVariants}
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                        >
+                          <h3 className="text-emerald-400 font-medium mb-2">
+                            Fee Breakdown
+                          </h3>
+                          <div className="grid grid-cols-2 gap-1 text-sm">
+                            <span className="text-gray-300">Base Amount:</span>
+                            <span className="text-white font-medium text-right">
+                              ₹{amount}
+                            </span>
+
+                            <span className="text-gray-300">
+                              Service Fee (1.85%):
+                            </span>
+                            <span className="text-white font-medium text-right">
+                              ₹{chargeAmount.toFixed(2)}
+                            </span>
+
+                            <span className="text-gray-300">GST (18%):</span>
+                            <span className="text-white font-medium text-right">
+                              ₹{gstAmount.toFixed(2)}
+                            </span>
+
+                            <motion.span
+                              className="text-emerald-400 font-medium pt-2 border-t border-gray-700"
+                              initial={{ color: "#10b981" }}
+                              animate={{
+                                color: ["#10b981", "#34d399", "#10b981"],
+                              }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                            >
+                              You Receive:
+                            </motion.span>
+                            <motion.span
+                              className="text-emerald-400 font-bold text-right pt-2 border-t border-gray-700"
+                              initial={{ color: "#10b981" }}
+                              animate={{
+                                color: ["#10b981", "#34d399", "#10b981"],
+                              }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                            >
+                              ₹{receiveAmount}
+                            </motion.span>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Pay Now Button */}
+                      <motion.button
+                        onClick={handlePayment}
+                        disabled={loading}
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-4 rounded-xl transition-all text-lg font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-70 w-full relative overflow-hidden group"
+                      >
+                        {/* Animated glow effect */}
+                        <motion.span
+                          className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-transparent"
+                          animate={{
+                            x: ["-100%", "100%"],
+                          }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 1.5,
+                            ease: "easeInOut",
+                          }}
+                        />
+
+                        <div className="relative z-10 flex items-center justify-center gap-2">
+                          {loading ? (
+                            <>
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{
+                                  repeat: Infinity,
+                                  duration: 1,
+                                  ease: "linear",
+                                }}
+                                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                              />
+                              <span>Processing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>{`Pay Now ₹${amount || "0"}`}</span>
+                              <motion.div
+                                animate={{ x: [0, 5, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
+                              >
+                                <ArrowRight className="w-5 h-5" />
+                              </motion.div>
+                            </>
+                          )}
+                        </div>
+                      </motion.button>
+                    </motion.div>
+                  }
+                </motion.div>
               </div>
-
-              <div className="space-y-4">
-                {/* Amount Input */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setAmount(e.target.value)
-                    }
-                    className={`w-full px-6 py-4 rounded-lg bg-gray-800/90 border ${
-                      formErrors.amount ? "border-red-500" : "border-gray-700"
-                    } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
-                    placeholder="Enter amount (₹)"
-                  />
-                  {formErrors.amount && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="mt-1 text-red-500 text-sm"
-                    >
-                      Please enter a valid amount
-                    </motion.p>
-                  )}
-                </motion.div>
-
-                {/* Mobile Number Input */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <input
-                    type="tel"
-                    value={mobileNumber}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setMobileNumber(e.target.value)
-                    }
-                    className={`w-full px-6 py-4 rounded-lg bg-gray-800/90 border ${
-                      formErrors.mobileNumber
-                        ? "border-red-500"
-                        : "border-gray-700"
-                    } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
-                    placeholder="Mobile Number (10 digits)"
-                    maxLength={10}
-                  />
-                  {formErrors.mobileNumber && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="mt-1 text-red-500 text-sm"
-                    >
-                      Please enter a valid 10-digit mobile number
-                    </motion.p>
-                  )}
-                </motion.div>
-
-                {/* Email Input */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setEmail(e.target.value)
-                    }
-                    className={`w-full px-6 py-4 rounded-lg bg-gray-800/90 border ${
-                      formErrors.email ? "border-red-500" : "border-gray-700"
-                    } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
-                    placeholder="Email Address"
-                  />
-                  {formErrors.email && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="mt-1 text-red-500 text-sm"
-                    >
-                      Please enter a valid email address
-                    </motion.p>
-                  )}
-                </motion.div>
-              </div>
-
-              <motion.button
-                onClick={handlePayment}
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-4 rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all text-lg font-semibold shadow-lg shadow-emerald-500/20 disabled:opacity-50 w-full relative overflow-hidden"
-              >
-                <motion.span
-                  className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-transparent"
-                  animate={{
-                    x: ["-100%", "100%"],
-                    opacity: [0, 0.5, 0],
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 1.5,
-                    ease: "easeInOut",
-                    repeatDelay: 0.5,
-                  }}
-                />
-                <span className="relative z-10">
-                  {loading ? "Processing..." : `Pay Now ₹${amount || "0"}`}
-                </span>
-
-                {amount && !loading && (
-                  <div className="mt-2 text-sm text-gray-700">
-                    <span className="block text-white">Receive Amount:</span>
-                    <span className="text-xl font-semibold text-white">
-                      ₹{receiveAmount}
-                    </span>
-                  </div>
-                )}
-              </motion.button>
-            </div>
-          </motion.div>
         </motion.div>
 
         {/* Features Grid */}
