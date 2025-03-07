@@ -188,7 +188,7 @@ const DashboardPage: React.FC = () => {
     setFormErrors(errors);
     return !Object.values(errors).some((isError) => isError);
   };
-  
+
   const isFormValid = (): boolean => {
     return (
       !formErrors.amount &&
@@ -202,7 +202,6 @@ const DashboardPage: React.FC = () => {
     if (!validateForm()) {
       return;
     }
-
 
     try {
       setLoading(true);
@@ -343,21 +342,64 @@ const DashboardPage: React.FC = () => {
           initial="initial"
           animate="animate"
           transition={{ delay: 0.4 }}
-          className="max-w-md mx-auto mt-12 mb-16 relative"
+          className="max-w-md mx-auto mt-20 mb-16 relative"
         >
+          {/* Enhanced background glow */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 rounded-2xl blur-xl"
+            className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 rounded-2xl blur-xl"
             animate={{
-              opacity: [0.4, 0.7, 0.4],
+              opacity: [0.3, 0.7, 0.3],
+              scale: [0.95, 1, 0.95],
             }}
             transition={{
               repeat: Infinity,
-              duration: 3,
+              duration: 4,
               ease: "easeInOut",
             }}
           />
 
-          <div className="relative p-6 md:p-8">
+          {/* Additional ambient light effect */}
+          <motion.div
+            className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-400/20 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.4, 0.6, 0.4],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 6,
+              ease: "easeInOut",
+              delay: 1,
+            }}
+          />
+
+          <motion.div
+            className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl"
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.5, 0.3, 0.5],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 5,
+              ease: "easeInOut",
+            }}
+          />
+
+          <div className="relative p-6 md:p-8 backdrop-blur-sm bg-gray-900/70 rounded-2xl border border-gray-800/50 shadow-xl">
+            {/* Subtle top border shimmer */}
+            <motion.div
+              className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+              animate={{
+                left: ["-100%", "100%"],
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 3,
+                ease: "easeInOut",
+              }}
+            />
+
             <motion.div
               className="space-y-8"
               variants={containerVariants}
@@ -371,20 +413,44 @@ const DashboardPage: React.FC = () => {
                 <h2 className="text-white text-2xl font-bold flex items-center gap-2">
                   <motion.div
                     initial={{ rotate: -15 }}
-                    animate={{ rotate: 0 }}
-                    transition={{ duration: 0.5 }}
+                    animate={{
+                      rotate: [0, -10, 0],
+                      y: [0, -2, 0],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
                   >
                     <CreditCard className="h-6 w-6 text-emerald-400" />
                   </motion.div>
-                  Make Payment
+                  <motion.span
+                    animate={{
+                      opacity: [0.9, 1, 0.9],
+                      textShadow: [
+                        "0 0 0px rgba(52, 211, 153, 0)",
+                        "0 0 4px rgba(52, 211, 153, 0.3)",
+                        "0 0 0px rgba(52, 211, 153, 0)",
+                      ],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    Make Payment
+                  </motion.span>
                 </h2>
                 <motion.div
                   animate={{
-                    y: [0, -3, 0],
+                    y: [0, -5, 0],
+                    rotate: [0, 10, 0],
                   }}
                   transition={{
                     repeat: Infinity,
-                    duration: 2,
+                    duration: 3,
                     ease: "easeInOut",
                   }}
                 >
@@ -392,13 +458,14 @@ const DashboardPage: React.FC = () => {
                 </motion.div>
               </motion.div>
 
-              {
-                <motion.div className="space-y-6" variants={containerVariants}>
-                  {/* Amount Input */}
-                  <motion.div variants={itemVariants}>
-                    <label className="block text-emerald-400 text-sm font-medium mb-2">
-                      Payment Amount
-                    </label>
+              <motion.div className="space-y-6" variants={containerVariants}>
+                {/* Amount Input */}
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <div className="relative">
                     <input
                       type="number"
                       value={amount}
@@ -414,31 +481,45 @@ const DashboardPage: React.FC = () => {
                       } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
                       placeholder="Enter amount (₹)"
                     />
-                    {formErrors.amount && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="mt-1 text-red-400 text-sm"
-                      >
-                        Please enter a valid amount
-                      </motion.p>
-                    )}
-                    {parseFloat(amount) < 50 && amount !== "" && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="mt-1 text-red-400 text-sm"
-                      >
-                        Amount cannot be less than ₹50
-                      </motion.p>
-                    )}
-                  </motion.div>
+                    <motion.div
+                      className="absolute right-0 top-0 bottom-0 w-10 rounded-r-xl bg-gradient-to-l from-emerald-500/10 to-transparent pointer-events-none"
+                      animate={{
+                        opacity: [0.2, 0.6, 0.2],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  </div>
+                  {formErrors.amount && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-1 text-red-400 text-sm"
+                    >
+                      Please enter a valid amount
+                    </motion.p>
+                  )}
+                  {parseFloat(amount) < 50 && amount !== "" && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-1 text-red-400 text-sm"
+                    >
+                      Amount cannot be less than ₹50
+                    </motion.p>
+                  )}
+                </motion.div>
 
-                  {/* Mobile Number Input */}
-                  <motion.div variants={itemVariants}>
-                    <label className="block text-emerald-400 text-sm font-medium mb-2">
-                      Mobile Number
-                    </label>
+                {/* Mobile Number Input */}
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <div className="relative">
                     <input
                       type="tel"
                       value={mobileNumber}
@@ -451,22 +532,38 @@ const DashboardPage: React.FC = () => {
                       placeholder="Mobile Number (10 digits)"
                       maxLength={10}
                     />
-                    {formErrors.mobileNumber && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="mt-1 text-red-400 text-sm"
-                      >
-                        Please enter a valid 10-digit mobile number
-                      </motion.p>
-                    )}
-                  </motion.div>
+                    {/* Adding subtle highlight effect on right side of input */}
+                    <motion.div
+                      className="absolute right-0 top-0 bottom-0 w-10 rounded-r-xl bg-gradient-to-l from-emerald-500/10 to-transparent pointer-events-none"
+                      animate={{
+                        opacity: [0.2, 0.6, 0.2],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "easeInOut",
+                        delay: 0.5,
+                      }}
+                    />
+                  </div>
+                  {formErrors.mobileNumber && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-1 text-red-400 text-sm"
+                    >
+                      Please enter a valid 10-digit mobile number
+                    </motion.p>
+                  )}
+                </motion.div>
 
-                  {/* Email Input */}
-                  <motion.div variants={itemVariants}>
-                    <label className="block text-emerald-400 text-sm font-medium mb-2">
-                      Email Address
-                    </label>
+                {/* Email Input */}
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <div className="relative">
                     <input
                       type="email"
                       value={email}
@@ -476,123 +573,151 @@ const DashboardPage: React.FC = () => {
                       } text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300`}
                       placeholder="Your Email Address"
                     />
-                    {formErrors.email && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="mt-1 text-red-400 text-sm"
-                      >
-                        Please enter a valid email address
-                      </motion.p>
-                    )}
-                  </motion.div>
-
-                  {/* Fee Breakdown */}
-                  {amount && parseFloat(amount) > 0 && (
+                    {/* Adding subtle highlight effect on right side of input */}
                     <motion.div
-                      className="bg-gray-900/50 p-4 rounded-xl border border-gray-700/50"
-                      variants={itemVariants}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
+                      className="absolute right-0 top-0 bottom-0 w-10 rounded-r-xl bg-gradient-to-l from-emerald-500/10 to-transparent pointer-events-none"
+                      animate={{
+                        opacity: [0.2, 0.6, 0.2],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "easeInOut",
+                        delay: 1,
+                      }}
+                    />
+                  </div>
+                  {formErrors.email && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-1 text-red-400 text-sm"
                     >
-                      <h3 className="text-emerald-400 font-medium mb-2">
-                        Fee Breakdown
-                      </h3>
-                      <div className="grid grid-cols-2 gap-1 text-sm">
-                        <span className="text-gray-300">Base Amount:</span>
-                        <span className="text-white font-medium text-right">
-                          ₹{amount}
-                        </span>
-
-                        <span className="text-gray-300">
-                          Service Fee (1.80%):
-                        </span>
-                        <span className="text-white font-medium text-right">
-                          ₹{chargeAmount.toFixed(2)}
-                        </span>
-
-                        <span className="text-gray-300">GST (18%):</span>
-                        <span className="text-white font-medium text-right">
-                          ₹{gstAmount.toFixed(2)}
-                        </span>
-
-                        <motion.span
-                          className="text-emerald-400 font-medium pt-2 border-t border-gray-700"
-                          initial={{ color: "#10b981" }}
-                          animate={{
-                            color: ["#10b981", "#34d399", "#10b981"],
-                          }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          You Receive:
-                        </motion.span>
-                        <motion.span
-                          className="text-emerald-400 font-bold text-right pt-2 border-t border-gray-700"
-                          initial={{ color: "#10b981" }}
-                          animate={{
-                            color: ["#10b981", "#34d399", "#10b981"],
-                          }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          ₹{receiveAmount}
-                        </motion.span>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Pay Now Button */}
-                  {isFormValid() && (
-                    <motion.button
-                      onClick={handlePayment}
-                      disabled={loading}
-                      variants={itemVariants}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-4 rounded-xl transition-all text-lg font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-70 w-full relative overflow-hidden group"
-                    >
-                      {/* Animated glow effect */}
-                      <motion.span
-                        className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-transparent"
-                        animate={{
-                          x: ["-100%", "100%"],
-                        }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 1.5,
-                          ease: "easeInOut",
-                        }}
-                      />
-
-                      <div className="relative z-10 flex items-center justify-center gap-2">
-                        {loading ? (
-                          <>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                repeat: Infinity,
-                                duration: 1,
-                                ease: "linear",
-                              }}
-                              className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                            />
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>{`Pay Now ₹${amount || "0"}`}</span>
-                            <motion.div
-                              animate={{ x: [0, 5, 0] }}
-                              transition={{ repeat: Infinity, duration: 1.5 }}
-                            >
-                              <ArrowRight className="w-5 h-5" />
-                            </motion.div>
-                          </>
-                        )}
-                      </div>
-                    </motion.button>
+                      Please enter a valid email address
+                    </motion.p>
                   )}
                 </motion.div>
-              }
+
+                {/* Fee Breakdown - Enhanced */}
+                {amount && parseFloat(amount) > 0 && (
+                  <motion.div
+                    className="bg-gray-900/70 p-5 rounded-xl border border-gray-700/50 overflow-hidden"
+                    variants={itemVariants}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    whileHover={{
+                      scale: 1.01,
+                      borderColor: "rgba(16, 185, 129, 0.3)",
+                    }}
+                  >
+                    {/* Adding decorative corner accent */}
+                    <motion.div
+                      className="absolute -top-2 -right-2 w-12 h-12 bg-emerald-500/10 rounded-full blur-md"
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.5, 0.8, 0.5],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 3,
+                        ease: "easeInOut",
+                      }}
+                    />
+
+                    <h3 className="text-emerald-400 font-medium mb-3 relative z-10">
+                      <motion.span
+                        animate={{
+                          textShadow: [
+                            "0 0 0px rgba(16, 185, 129, 0)",
+                            "0 0 3px rgba(16, 185, 129, 0.5)",
+                            "0 0 0px rgba(16, 185, 129, 0)",
+                          ],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        Fee Breakdown
+                      </motion.span>
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <span className="text-gray-300">Base Amount:</span>
+                      <span className="text-white font-medium text-right">
+                        ₹{amount}
+                      </span>
+
+                      <span className="text-gray-300">
+                        Service Fee (1.80%):
+                      </span>
+                      <span className="text-white font-medium text-right">
+                        ₹{chargeAmount.toFixed(2)}
+                      </span>
+
+                      <span className="text-gray-300">GST (18%):</span>
+                      <span className="text-white font-medium text-right">
+                        ₹{gstAmount.toFixed(2)}
+                      </span>
+
+                      <motion.span
+                        className="text-emerald-400 font-medium pt-3 border-t border-gray-700"
+                        animate={{
+                          color: ["#10b981", "#34d399", "#10b981"],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        You Receive:
+                      </motion.span>
+                      <motion.span
+                        className="text-emerald-400 font-bold text-right pt-3 border-t border-gray-700"
+                        animate={{
+                          color: ["#10b981", "#34d399", "#10b981"],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        ₹{receiveAmount}
+                      </motion.span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Payment Button */}
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <button
+                    onClick={handlePayment}
+                    disabled={!isFormValid() || loading}
+                    className={`w-full px-6 py-4 rounded-xl ${
+                      isFormValid()
+                        ? "bg-emerald-500 hover:bg-emerald-600"
+                        : "bg-gray-700 cursor-not-allowed"
+                    } text-white font-medium transition-all duration-300 relative overflow-hidden`}
+                  >
+                    {/* Button glow effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-transparent"
+                      animate={{
+                        x: ["-100%", "100%"],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "linear",
+                      }}
+                    />
+                    <div className="relative flex items-center justify-center gap-2">
+                      <span>{loading ? "Processing..." : "Make Payment"}</span>
+                      <ArrowRight className="h-5 w-5" />
+                    </div>
+                  </button>
+                </motion.div>
+              </motion.div>
             </motion.div>
           </div>
         </motion.div>
